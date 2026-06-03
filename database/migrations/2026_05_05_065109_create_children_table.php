@@ -13,8 +13,7 @@ return new class extends Migration
     {
         Schema::create('children', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('parent_id')->constrained('parents');
-
+           
             // ── Child info ──────────────────────────────
             $table->string('first_name');
             $table->string('last_name');
