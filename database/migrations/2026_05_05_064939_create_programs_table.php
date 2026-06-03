@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('name');
             $table->enum('service_type', ['full_day','half_day','after_school','drop_in']);
             $table->enum('billing_model', ['monthly','daily','hourly']);
-            $table->unsignedSmallInteger('min_age_months');
-            $table->unsignedSmallInteger('max_age_months');
+            $table->unsignedSmallInteger('min_age_months')->nullable();
+            $table->unsignedSmallInteger('max_age_months')->nullable();
             $table->unsignedSmallInteger('capacity');
             $table->decimal('monthly_fee', 8, 2)->nullable();
             $table->decimal('daily_rate', 8, 2)->nullable();

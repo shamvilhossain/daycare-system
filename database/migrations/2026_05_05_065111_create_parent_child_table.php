@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('guardian_child', function (Blueprint $table) {
+        Schema::create('parent_child', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('parent_id')->constrained('parents');
