@@ -15,6 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('child_id')->constrained('children');
             $table->foreignId('staff_id')->constrained('staff');
+            $table->foreignId('activity_occurrence_id')
+                    ->nullable()
+                    ->constrained('activity_occurrences'); // only populated when log_type = 'activity'
             $table->date('log_date');
             $table->enum('log_type', ['nap','meal','bottle','diaper_change','activity','incident','special_program','medication','other']);
             $table->time('start_time')->nullable();
@@ -23,6 +26,7 @@ return new class extends Migration
             $table->string('items_served')->nullable();
             $table->string('amount_eaten')->nullable();
             $table->enum('quality', ['good','fair','poor','refused'])->nullable();
+            $table->boolean('is_completed')->nullable(); // did the child finish/complete the activity or task
             $table->text('notes')->nullable();
             $table->timestamps();
         });

@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('child_activity_participation', function (Blueprint $table) {
+        Schema::create('activity_media', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('activity_occurrence_id')->constrained('activity_occurrences');
+            $table->string('file_url');
+            $table->enum('media_type', ['photo', 'video']);
+            $table->string('caption')->nullable();
             $table->timestamps();
         });
     }
@@ -22,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('child_activity_participation');
+        Schema::dropIfExists('activity_media');
     }
 };
