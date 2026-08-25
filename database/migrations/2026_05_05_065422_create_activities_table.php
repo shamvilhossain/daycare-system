@@ -13,6 +13,17 @@ return new class extends Migration
     {
         Schema::create('activities', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->enum('category', [
+                'art', 'music', 'outdoor', 'reading',
+                'motor_skills', 'sensory', 'cognitive', 'social'
+            ]);
+            $table->text('description')->nullable();
+            $table->string('materials_needed')->nullable();
+            $table->unsignedSmallInteger('duration_minutes')->nullable();
+            $table->unsignedSmallInteger('min_age_months')->nullable();
+            $table->unsignedSmallInteger('max_age_months')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

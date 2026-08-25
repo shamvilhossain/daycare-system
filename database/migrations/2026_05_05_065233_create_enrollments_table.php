@@ -26,8 +26,7 @@ return new class extends Migration
 
             $table->enum('status', [
                 'pending',    // submitted, awaiting admin approval
-                'approved',   // approved, not yet started
-                'active',     // currently attending
+                'active',     // approved / currently attending
                 'withdrawn',  // left before end date
                 'graduated',  // completed the program
                 'rejected',   // admin denied the enrollment

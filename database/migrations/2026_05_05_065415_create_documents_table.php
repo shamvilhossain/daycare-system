@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('child_id')->constrained('children');
+            $table->string('name');
+            $table->enum('doc_type', ['birth_certificate','custody_agreement', 'medical_form', 'other']);
+            $table->string('file_url');
+            $table->date('expiry_date')->nullable();
             $table->timestamps();
         });
     }

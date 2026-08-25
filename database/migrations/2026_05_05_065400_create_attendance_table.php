@@ -13,6 +13,13 @@ return new class extends Migration
     {
         Schema::create('attendance', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('child_id')->constrained('children');
+            $table->foreignId('program_id')->constrained('programs');
+            $table->date('attendance_date');
+            $table->time('check_in_time')->nullable();
+            $table->time('check_out_time')->nullable();
+            $table->enum('status', ['present','absent','late','excused'])->default('present');
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }
