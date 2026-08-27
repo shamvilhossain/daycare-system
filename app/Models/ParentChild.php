@@ -6,5 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ParentChild extends Model
 {
-    //
+    protected $table = 'parent_child';
+
+    public function parent() { return $this->belongsTo(ParentProfile::class, 'parent_id'); }
+    public function child()  { return $this->belongsTo(Child::class); }
 }
