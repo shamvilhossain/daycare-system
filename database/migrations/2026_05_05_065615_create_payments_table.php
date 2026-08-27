@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('invoice_id')->constrained('invoices')->cascadeOnDelete();
+            $table->decimal('amount_paid', 10, 2);
+            $table->string('payment_method'); // e.g., 'cash', 'credit_card', 'bank_transfer'
+            $table->string('transaction_id')->nullable(); // For Stripe, PayPal, or check numbers
+            $table->dateTime('payment_date');
             $table->timestamps();
         });
     }

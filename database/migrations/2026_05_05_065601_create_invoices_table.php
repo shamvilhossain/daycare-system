@@ -13,6 +13,13 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('parent_id')->constrained('parents');
+            $table->foreignId('child_id')->constrained('children');
+            $table->string('invoice_number')->unique();
+            $table->date('invoice_date');
+            $table->date('due_date');
+            $table->decimal('total_amount', 10, 2)->default(0);
+            $table->enum('status', ['draft','paid','overdue','cancelled'])->default('draft');
             $table->timestamps();
         });
     }
