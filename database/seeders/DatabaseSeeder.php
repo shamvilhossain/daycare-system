@@ -15,11 +15,29 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->call([
+            // RolePermissionSeeder::class,   // roles/permissions first — already exists
+            // AdminSeeder::class,            // admin user — already exists
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            ParentSeeder::class,
+            StaffSeeder::class,
+            ProgramSeeder::class,
+            ChildSeeder::class,
+
+            EnrollmentSeeder::class,
+            AttendanceSeeder::class,
+            DocumentSeeder::class,
+
+            ActivitySeeder::class,
+            ActivityOccurrenceSeeder::class,
+            ChildDailyLogSeeder::class,
+            ActivityMediaSeeder::class,
+
+            InvoiceSeeder::class,
+            InvoiceItemSeeder::class,
+            PaymentSeeder::class,
+
+            AnnouncementSeeder::class,
         ]);
     }
 }

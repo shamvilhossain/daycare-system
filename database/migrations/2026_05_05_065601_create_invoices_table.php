@@ -9,6 +9,15 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
+
+    // How they work together:
+
+    // Generate the Bill: You create a record in invoices for $550.
+
+    // Itemize it: You create two records in invoice_items connected to that invoice (Tuition: $500, Meals: $50).
+
+    // Get Paid: When the parent pays, you create a record in payments and update the status column on the invoices table to paid.
+
     public function up(): void
     {
         Schema::create('invoices', function (Blueprint $table) {
