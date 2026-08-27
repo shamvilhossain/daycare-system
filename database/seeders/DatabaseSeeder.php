@@ -16,13 +16,14 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            // RolePermissionSeeder::class,   // roles/permissions first — already exists
-            // AdminSeeder::class,            // admin user — already exists
+            RolePermissionSeeder::class,   // roles/permissions first 
+            AdminSeeder::class,          
 
-            ParentSeeder::class,
-            StaffSeeder::class,
+            ParentSeeder::class, // creates User + parents row together
+            StaffSeeder::class,  // creates User + staff row together
             ProgramSeeder::class,
             ChildSeeder::class,
+            ParentChildSeeder::class,
 
             EnrollmentSeeder::class,
             AttendanceSeeder::class,
