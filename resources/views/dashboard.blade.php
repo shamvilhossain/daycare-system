@@ -325,6 +325,16 @@
                             </a>
                         </li>
 
+                        @role('admin')
+                        <li class="nav-header">ADMIN</li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.role-permissions.index') }}" class="nav-link">
+                                <i class="nav-icon bi bi-shield-lock-fill"></i>
+                                <p>Role Permissions</p>
+                            </a>
+                        </li>
+                        @endrole
+
                         <li class="nav-header">REPORTS</li>
                         <li class="nav-item">
                             <a href="#" class="nav-link">
