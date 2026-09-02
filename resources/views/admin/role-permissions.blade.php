@@ -437,6 +437,12 @@
                         <li class="nav-item"><a href="#" class="nav-link"><i class="nav-icon bi bi-credit-card-2-front-fill"></i><p>Payments</p></a></li>
                         <li class="nav-header">ADMIN</li>
                         <li class="nav-item">
+                            <a href="{{ route('admin.users.index') }}" class="nav-link">
+                                <i class="nav-icon bi bi-person-lines-fill"></i>
+                                <p>Users & Accounts</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a href="{{ route('admin.role-permissions.index') }}" class="nav-link active">
                                 <i class="nav-icon bi bi-shield-lock-fill"></i>
                                 <p>Role Permissions</p>

@@ -43,4 +43,22 @@ class User extends Authenticatable
     {
         return $this->hasOne(Staff::class, 'user_id');
     }
+
+    public function getProfileAttribute()
+    {
+        return $this->parentProfile ?? $this->staffProfile;
+    }
+
+    public function getNameAttribute(): string
+    {
+        if ($this->parentProfile) {
+            return $this->parentProfile->full_name;
+        }
+
+        if ($this->staffProfile) {
+            return $this->staffProfile->full_name;
+        }
+
+        return explode('@', $this->email)[0];
+    }
 }
