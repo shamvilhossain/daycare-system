@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Child;
+use App\Models\Document;
 use App\Models\ParentProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +28,7 @@ class ChildController extends Controller
             $query->where('is_active', false);
         }
 
-        $children = $query->with('parents')->orderBy('first_name')->paginate(15)->appends($request->query());
+        $children = $query->with(['parents', 'documents'])->orderBy('first_name')->paginate(15)->appends($request->query());
         return view('admin.children.index', compact('children'));
     }
 
@@ -40,23 +41,28 @@ class ChildController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'first_name'          => 'required|string|max:255',
-            'last_name'           => 'required|string|max:255',
-            'date_of_birth'       => 'required|date|before:today',
-            'allergies'           => 'nullable|string',
-            'medical_notes'       => 'nullable|string',
-            'photo'               => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:5120',
-            'ec_name'             => 'nullable|string|max:255',
-            'ec_relationship'     => 'nullable|string|max:255',
-            'ec_phone'            => 'nullable|string|max:50',
-            'ec_authorized_pickup' => 'nullable',
-            'is_active'           => 'nullable',
-            'parent_ids'          => 'nullable|array',
-            'parent_ids.*'        => 'exists:parents,id',
-            'relationships'       => 'nullable|array',
-            'relationships.*'     => 'nullable|in:mother,father,step_parent,grandparent,legal_guardian,other',
-            'is_primary'          => 'nullable|array',
-            'can_pickup'          => 'nullable|array',
+            'first_name'             => 'required|string|max:255',
+            'last_name'              => 'required|string|max:255',
+            'date_of_birth'          => 'required|date|before:today',
+            'allergies'              => 'nullable|string',
+            'medical_notes'          => 'nullable|string',
+            'photo'                  => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:5120',
+            'ec_name'                => 'nullable|string|max:255',
+            'ec_relationship'        => 'nullable|string|max:255',
+            'ec_phone'               => 'nullable|string|max:50',
+            'ec_authorized_pickup'   => 'nullable',
+            'is_active'              => 'nullable',
+            'parent_ids'             => 'nullable|array',
+            'parent_ids.*'           => 'exists:parents,id',
+            'relationships'          => 'nullable|array',
+            'relationships.*'        => 'nullable|in:mother,father,step_parent,grandparent,legal_guardian,other',
+            'is_primary'             => 'nullable|array',
+            'can_pickup'             => 'nullable|array',
+            'documents'              => 'nullable|array',
+            'documents.*.name'       => 'nullable|string|max:255',
+            'documents.*.doc_type'   => 'nullable|in:birth_certificate,custody_agreement,medical_form,other',
+            'documents.*.expiry_date'=> 'nullable|date',
+            'documents.*.file'       => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,webp|max:10240',
         ]);
 
         $photoPath = null;
@@ -93,6 +99,29 @@ class ChildController extends Controller
                     ]);
                 }
             }
+
+            // Handle documents upload
+            if ($request->has('documents')) {
+                $docFiles = $request->file('documents', []);
+                $docInputs = $request->input('documents', []);
+
+                foreach ($docInputs as $idx => $docInput) {
+                    if (isset($docFiles[$idx]['file']) && $docFiles[$idx]['file']->isValid()) {
+                        $file = $docFiles[$idx]['file'];
+                        $name = !empty($docInput['name']) ? $docInput['name'] : pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                        $docType = !empty($docInput['doc_type']) ? $docInput['doc_type'] : 'other';
+                        $expiryDate = !empty($docInput['expiry_date']) ? $docInput['expiry_date'] : null;
+                        $storedPath = $file->store('documents', 'public');
+
+                        $child->documents()->create([
+                            'name'        => $name,
+                            'doc_type'    => $docType,
+                            'file_url'    => $storedPath,
+                            'expiry_date' => $expiryDate,
+                        ]);
+                    }
+                }
+            }
         });
 
         return redirect()->route('admin.children.index')->with('success', 'Child added successfully.');
@@ -100,7 +129,7 @@ class ChildController extends Controller
 
     public function edit(Child $child)
     {
-        $child->load('parents');
+        $child->load(['parents', 'documents']);
         $parents = ParentProfile::orderBy('first_name')->get();
         return view('admin.children.edit', compact('child', 'parents'));
     }
@@ -108,23 +137,28 @@ class ChildController extends Controller
     public function update(Request $request, Child $child)
     {
         $validated = $request->validate([
-            'first_name'          => 'required|string|max:255',
-            'last_name'           => 'required|string|max:255',
-            'date_of_birth'       => 'required|date|before:today',
-            'allergies'           => 'nullable|string',
-            'medical_notes'       => 'nullable|string',
-            'photo'               => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:5120',
-            'ec_name'             => 'nullable|string|max:255',
-            'ec_relationship'     => 'nullable|string|max:255',
-            'ec_phone'            => 'nullable|string|max:50',
-            'ec_authorized_pickup' => 'nullable',
-            'is_active'           => 'nullable',
-            'parent_ids'          => 'nullable|array',
-            'parent_ids.*'        => 'exists:parents,id',
-            'relationships'       => 'nullable|array',
-            'relationships.*'     => 'nullable|in:mother,father,step_parent,grandparent,legal_guardian,other',
-            'is_primary'          => 'nullable|array',
-            'can_pickup'          => 'nullable|array',
+            'first_name'             => 'required|string|max:255',
+            'last_name'              => 'required|string|max:255',
+            'date_of_birth'          => 'required|date|before:today',
+            'allergies'              => 'nullable|string',
+            'medical_notes'          => 'nullable|string',
+            'photo'                  => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:5120',
+            'ec_name'                => 'nullable|string|max:255',
+            'ec_relationship'        => 'nullable|string|max:255',
+            'ec_phone'               => 'nullable|string|max:50',
+            'ec_authorized_pickup'   => 'nullable',
+            'is_active'              => 'nullable',
+            'parent_ids'             => 'nullable|array',
+            'parent_ids.*'           => 'exists:parents,id',
+            'relationships'          => 'nullable|array',
+            'relationships.*'        => 'nullable|in:mother,father,step_parent,grandparent,legal_guardian,other',
+            'is_primary'             => 'nullable|array',
+            'can_pickup'             => 'nullable|array',
+            'documents'              => 'nullable|array',
+            'documents.*.name'       => 'nullable|string|max:255',
+            'documents.*.doc_type'   => 'nullable|in:birth_certificate,custody_agreement,medical_form,other',
+            'documents.*.expiry_date'=> 'nullable|date',
+            'documents.*.file'       => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,webp|max:10240',
         ]);
 
         $photoPath = $child->photo_url;
@@ -166,6 +200,29 @@ class ChildController extends Controller
                 }
             }
             $child->parents()->sync($syncData);
+
+            // Handle new documents upload
+            if ($request->has('documents')) {
+                $docFiles = $request->file('documents', []);
+                $docInputs = $request->input('documents', []);
+
+                foreach ($docInputs as $idx => $docInput) {
+                    if (isset($docFiles[$idx]['file']) && $docFiles[$idx]['file']->isValid()) {
+                        $file = $docFiles[$idx]['file'];
+                        $name = !empty($docInput['name']) ? $docInput['name'] : pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                        $docType = !empty($docInput['doc_type']) ? $docInput['doc_type'] : 'other';
+                        $expiryDate = !empty($docInput['expiry_date']) ? $docInput['expiry_date'] : null;
+                        $storedPath = $file->store('documents', 'public');
+
+                        $child->documents()->create([
+                            'name'        => $name,
+                            'doc_type'    => $docType,
+                            'file_url'    => $storedPath,
+                            'expiry_date' => $expiryDate,
+                        ]);
+                    }
+                }
+            }
         });
 
         return redirect()->route('admin.children.index')->with('success', 'Child updated successfully.');
@@ -174,13 +231,49 @@ class ChildController extends Controller
     public function destroy(Child $child)
     {
         DB::transaction(function () use ($child) {
-            if ($child->photo_url) {
+            if ($child->photo_url && Storage::disk('public')->exists($child->photo_url)) {
                 Storage::disk('public')->delete($child->photo_url);
+            }
+            foreach ($child->documents as $document) {
+                if ($document->file_url && Storage::disk('public')->exists($document->file_url)) {
+                    Storage::disk('public')->delete($document->file_url);
+                }
+                $document->delete();
             }
             $child->parents()->detach();
             $child->delete();
         });
 
         return redirect()->route('admin.children.index')->with('success', 'Child deleted successfully.');
+    }
+
+    public function downloadDocument(Document $document)
+    {
+        $filePath = $document->file_url;
+        if (Storage::disk('public')->exists($filePath)) {
+            $ext = pathinfo($filePath, PATHINFO_EXTENSION);
+            $downloadName = $document->name . ($ext ? '.' . $ext : '');
+            return Storage::disk('public')->download($filePath, $downloadName);
+        }
+
+        if (file_exists(public_path('storage/' . $filePath))) {
+            return response()->download(public_path('storage/' . $filePath));
+        }
+
+        return back()->with('error', 'Document file not found on the server.');
+    }
+
+    public function destroyDocument(Document $document)
+    {
+        if ($document->file_url && Storage::disk('public')->exists($document->file_url)) {
+            Storage::disk('public')->delete($document->file_url);
+        }
+        $document->delete();
+
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Document deleted successfully.']);
+        }
+
+        return back()->with('success', 'Document deleted successfully.');
     }
 }

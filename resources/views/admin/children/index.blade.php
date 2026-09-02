@@ -67,10 +67,6 @@
                         <li class="nav-item"><a href="{{ route('dashboard') }}" class="nav-link"><i class="nav-icon bi bi-grid-1x2-fill"></i><p>Dashboard</p></a></li>
                         <li class="nav-header">MANAGEMENT</li>
                         <li class="nav-item"><a href="{{ route('admin.children.index') }}" class="nav-link active"><i class="nav-icon bi bi-people-fill"></i><p>Children</p></a></li>
-                        <li class="nav-item"><a href="#" class="nav-link"><i class="nav-icon bi bi-person-badge-fill"></i><p>Staff</p></a></li>
-                        <li class="nav-item"><a href="#" class="nav-link"><i class="nav-icon bi bi-calendar-event-fill"></i><p>Activities</p></a></li>
-                        <li class="nav-item"><a href="#" class="nav-link"><i class="nav-icon bi bi-clipboard-check-fill"></i><p>Enrollments</p></a></li>
-                        <li class="nav-item"><a href="#" class="nav-link"><i class="nav-icon bi bi-credit-card-2-front-fill"></i><p>Payments</p></a></li>
                         <li class="nav-header">ADMIN</li>
                         <li class="nav-item"><a href="{{ route('admin.programs.index') }}" class="nav-link"><i class="nav-icon bi bi-book-half"></i><p>Programs</p></a></li>
                         <li class="nav-item"><a href="{{ route('admin.users.index') }}" class="nav-link"><i class="nav-icon bi bi-person-lines-fill"></i><p>Users & Accounts</p></a></li>
@@ -87,7 +83,7 @@
                     <div class="page-banner d-flex justify-content-between align-items-center">
                         <div>
                             <h2><i class="bi bi-people-fill me-2"></i>Children</h2>
-                            <p>Manage enrolled children, their parents, and emergency contacts</p>
+                            <p>Manage enrolled children, their parents, emergency contacts, and documents</p>
                         </div>
                         <a href="{{ route('admin.children.create') }}" class="btn btn-light fw-bold shadow-sm" style="position:relative;z-index:1;">
                             <i class="bi bi-plus-lg me-1"></i> Add Child
@@ -136,6 +132,7 @@
                                         <th>Name</th>
                                         <th>Date of Birth</th>
                                         <th>Parent(s)</th>
+                                        <th>Documents</th>
                                         <th>Allergies</th>
                                         <th>Status</th>
                                         <th class="text-end">Actions</th>
@@ -152,13 +149,22 @@
                                                 @endif
                                             </td>
                                             <td class="fw-medium">{{ $child->full_name }}</td>
-                                            <td>{{ $child->date_of_birth->format('M d, Y') }}</td>
+                                            <td>{{ $child->date_of_birth ? $child->date_of_birth->format('M d, Y') : '—' }}</td>
                                             <td>
                                                 @forelse($child->parents as $parent)
                                                     <span class="badge bg-info-subtle text-info">{{ $parent->full_name }}</span>
                                                 @empty
                                                     <span class="text-muted">—</span>
                                                 @endforelse
+                                            </td>
+                                            <td>
+                                                @if($child->documents && $child->documents->count() > 0)
+                                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                                        <i class="bi bi-paperclip me-1"></i>{{ $child->documents->count() }} doc{{ $child->documents->count() > 1 ? 's' : '' }}
+                                                    </span>
+                                                @else
+                                                    <span class="text-muted small">None</span>
+                                                @endif
                                             </td>
                                             <td>{{ $child->allergies ?? '—' }}</td>
                                             <td>
@@ -169,15 +175,15 @@
                                                 @endif
                                             </td>
                                             <td class="text-end">
-                                                <a href="{{ route('admin.children.edit', $child) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
-                                                <form action="{{ route('admin.children.destroy', $child) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Delete this child record?');">
+                                                <a href="{{ route('admin.children.edit', $child) }}" class="btn btn-sm btn-outline-primary" title="Edit Child & Documents"><i class="bi bi-pencil"></i></a>
+                                                <form action="{{ route('admin.children.destroy', $child) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Delete this child and all associated documents?');">
                                                     @csrf @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Child"><i class="bi bi-trash"></i></button>
                                                 </form>
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr><td colspan="7" class="text-center py-4 text-muted">No children found.</td></tr>
+                                        <tr><td colspan="8" class="text-center py-4 text-muted">No children found.</td></tr>
                                     @endforelse
                                 </tbody>
                             </table>

@@ -10,7 +10,7 @@
     @vite(['resources/css/adminlte.css', 'resources/js/adminlte.js'])
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .parent-row { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem; margin-bottom: 0.75rem; }
+        .parent-row, .doc-row { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem; margin-bottom: 0.75rem; }
     </style>
 </head>
 <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
@@ -153,6 +153,24 @@
                             </div>
                         </div>
 
+                        {{-- Documents & Attachments --}}
+                        <div class="card shadow-sm border-0 mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-0"><i class="bi bi-file-earmark-arrow-up-fill me-2"></i>Documents & Attachments</h5>
+                                    <small class="text-muted">Attach birth certificates, medical immunizations, custody forms, etc. (PDF, Word, JPG, PNG)</small>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="addDocBtn"><i class="bi bi-plus-lg me-1"></i>Add Document</button>
+                            </div>
+                            <div class="card-body" id="documentContainer">
+                                {{-- JS will add document rows here --}}
+                                <div class="text-muted text-center py-3" id="noDocNotice">
+                                    <i class="bi bi-folder-plus fs-3 d-block mb-1 text-secondary"></i>
+                                    <span>No documents added yet. Click "Add Document" to attach files.</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="text-end mb-4">
                             <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check-lg me-1"></i>Create Child</button>
                         </div>
@@ -164,6 +182,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Guardians
             const container = document.getElementById('parentContainer');
             const addBtn = document.getElementById('addParentBtn');
             let idx = 0;
@@ -212,6 +231,57 @@
             container.addEventListener('click', function(e) {
                 if (e.target.closest('.remove-parent-btn')) {
                     e.target.closest('.parent-row').remove();
+                }
+            });
+
+            // Documents
+            const docContainer = document.getElementById('documentContainer');
+            const addDocBtn = document.getElementById('addDocBtn');
+            const noDocNotice = document.getElementById('noDocNotice');
+            let docIdx = 0;
+
+            addDocBtn.addEventListener('click', function() {
+                if (noDocNotice) noDocNotice.style.display = 'none';
+
+                const row = document.createElement('div');
+                row.className = 'doc-row';
+                row.innerHTML = `
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-3">
+                            <label class="form-label small mb-1 fw-semibold">Document Name</label>
+                            <input type="text" name="documents[${docIdx}][name]" class="form-control form-control-sm" placeholder="e.g. Birth Certificate" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small mb-1 fw-semibold">Document Type</label>
+                            <select name="documents[${docIdx}][doc_type]" class="form-select form-select-sm" required>
+                                <option value="birth_certificate">Birth Certificate</option>
+                                <option value="medical_form">Medical Form / Immunization</option>
+                                <option value="custody_agreement">Custody Agreement</option>
+                                <option value="other" selected>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small mb-1 fw-semibold">Expiry Date</label>
+                            <input type="date" name="documents[${docIdx}][expiry_date]" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small mb-1 fw-semibold">File (PDF, Doc, Image)</label>
+                            <input type="file" name="documents[${docIdx}][file]" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp" required>
+                        </div>
+                        <div class="col-md-1 text-end pt-3">
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-doc-btn" title="Remove Document"><i class="bi bi-trash"></i></button>
+                        </div>
+                    </div>`;
+                docContainer.appendChild(row);
+                docIdx++;
+            });
+
+            docContainer.addEventListener('click', function(e) {
+                if (e.target.closest('.remove-doc-btn')) {
+                    e.target.closest('.doc-row').remove();
+                    if (docContainer.querySelectorAll('.doc-row').length === 0 && noDocNotice) {
+                        noDocNotice.style.display = 'block';
+                    }
                 }
             });
 

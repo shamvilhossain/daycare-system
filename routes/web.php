@@ -42,6 +42,8 @@ Route::middleware('auth')->group(function () {
 
         // Children management
         Route::resource('/admin/children', ChildController::class, ['as' => 'admin']);
+        Route::get('/admin/documents/{document}/download', [ChildController::class, 'downloadDocument'])->name('admin.documents.download');
+        Route::delete('/admin/documents/{document}', [ChildController::class, 'destroyDocument'])->name('admin.documents.destroy');
 
         // Role-Permission management
         Route::get('/admin/role-permissions', [RolePermissionController::class, 'index'])->name('admin.role-permissions.index');

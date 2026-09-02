@@ -10,8 +10,9 @@
     @vite(['resources/css/adminlte.css', 'resources/js/adminlte.js'])
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .parent-row { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem; margin-bottom: 0.75rem; }
+        .parent-row, .doc-row { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem; margin-bottom: 0.75rem; }
         .current-photo { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; border: 2px solid #e5e7eb; }
+        .doc-icon-badge { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
     </style>
 </head>
 <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
@@ -55,21 +56,35 @@
 
             <div class="app-content">
                 <div class="container-fluid">
+                    @if (session('success'))
+                        <div class="alert alert-success alert-dismissible fade show">
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+
+                    @if (session('error'))
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            {{ session('error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+
+                    @if ($errors->any())
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Please fix the following errors:</strong>
+                            <ul class="mb-0 mt-1">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+
                     <form action="{{ route('admin.children.update', $child) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
-
-                        @if ($errors->any())
-                            <div class="alert alert-danger alert-dismissible fade show">
-                                <strong>Please fix the following errors:</strong>
-                                <ul class="mb-0 mt-1">
-                                    @foreach ($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        @endif
 
                         {{-- Child Info --}}
                         <div class="card shadow-sm border-0 mb-3">
@@ -88,7 +103,7 @@
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
-                                        <input type="date" name="date_of_birth" class="form-control @error('date_of_birth') is-invalid @enderror" value="{{ old('date_of_birth', $child->date_of_birth->format('Y-m-d')) }}" required>
+                                        <input type="date" name="date_of_birth" class="form-control @error('date_of_birth') is-invalid @enderror" value="{{ old('date_of_birth', $child->date_of_birth ? $child->date_of_birth->format('Y-m-d') : '') }}" required>
                                         @error('date_of_birth')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
                                     <div class="col-md-6">
@@ -103,7 +118,7 @@
                                         <label class="form-label">Photo</label>
                                         @if($child->photo_url)
                                             <div class="mb-2" id="currentPhotoWrap">
-                                                <img src="{{ asset('storage/' . $child->photo_url) }}" id="photoPreviewImg" class="current-photo" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:2px solid #e5e7eb;" alt="">
+                                                <img src="{{ asset('storage/' . $child->photo_url) }}" id="photoPreviewImg" class="current-photo" alt="">
                                             </div>
                                         @else
                                             <div class="mb-2" id="currentPhotoWrap" style="display:none;">
@@ -134,7 +149,7 @@
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Relationship</label>
-                                        <input type="text" name="ec_relationship" class="form-control" value="{{ old('ec_relationship', $child->ec_relationship) }}">
+                                        <input type="text" name="ec_relationship" class="form-control" value="{{ old('ec_relationship', $child->ec_relationship) }}" placeholder="e.g. Grandmother, Uncle">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Phone</label>
@@ -161,9 +176,86 @@
                             </div>
                         </div>
 
+                        {{-- Documents & Attachments --}}
+                        <div class="card shadow-sm border-0 mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-0"><i class="bi bi-file-earmark-text-fill me-2"></i>Documents & Attachments</h5>
+                                    <small class="text-muted">Manage child records, medical clearances, immunization cards, and agreements</small>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="addDocBtn"><i class="bi bi-plus-lg me-1"></i>Attach New Document</button>
+                            </div>
+                            <div class="card-body">
+                                {{-- Existing Documents Table --}}
+                                @if($child->documents && $child->documents->count() > 0)
+                                    <div class="table-responsive mb-3">
+                                        <table class="table table-hover align-middle border rounded">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Document</th>
+                                                    <th>Type</th>
+                                                    <th>Uploaded</th>
+                                                    <th class="text-end">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($child->documents as $doc)
+                                                    <tr>
+                                                        <td>
+                                                            <div class="d-flex align-items-center gap-2">
+                                                                <div class="doc-icon-badge bg-primary-subtle text-primary">
+                                                                    <i class="bi bi-file-earmark-pdf-fill"></i>
+                                                                </div>
+                                                                <div>
+                                                                    <span class="fw-semibold text-dark">{{ $doc->name }}</span>
+                                                                    <small class="text-muted d-block font-monospace">{{ basename($doc->file_url) }}</small>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge {{ $doc->doc_type_badge_class }}">{{ $doc->doc_type_label }}</span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="text-muted small">{{ $doc->created_at ? $doc->created_at->format('M d, Y') : '—' }}</span>
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <div class="btn-group btn-group-sm">
+                                                                <a href="{{ route('admin.documents.download', $doc) }}" class="btn btn-outline-secondary" title="Download Document">
+                                                                    <i class="bi bi-download"></i>
+                                                                </a>
+                                                                <button type="button" class="btn btn-outline-danger" onclick="deleteExistingDoc('{{ route('admin.documents.destroy', $doc) }}', '{{ addslashes($doc->name) }}')" title="Delete Document">
+                                                                    <i class="bi bi-trash"></i>
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="alert alert-light border text-center py-3 mb-3 text-muted">
+                                        <i class="bi bi-folder2-open fs-3 d-block mb-1 text-secondary"></i>
+                                        No existing documents on file for this child.
+                                    </div>
+                                @endif
+
+                                {{-- New Documents to add --}}
+                                <div id="documentContainer">
+                                    {{-- JS will add new document rows here --}}
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="text-end mb-4">
                             <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check-lg me-1"></i>Update Child</button>
                         </div>
+                    </form>
+
+                    {{-- Standalone Document Delete Form --}}
+                    <form id="deleteDocForm" method="POST" style="display:none;">
+                        @csrf
+                        @method('DELETE')
                     </form>
                 </div>
             </div>
@@ -171,7 +263,16 @@
     </div>
 
     <script>
+        function deleteExistingDoc(deleteUrl, docName) {
+            if (confirm(`Are you sure you want to delete "${docName}"?`)) {
+                const form = document.getElementById('deleteDocForm');
+                form.action = deleteUrl;
+                form.submit();
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            // Guardians
             const container = document.getElementById('parentContainer');
             const addBtn = document.getElementById('addParentBtn');
             let idx = 0;
@@ -224,6 +325,51 @@
             container.addEventListener('click', function(e) {
                 if (e.target.closest('.remove-parent-btn')) {
                     e.target.closest('.parent-row').remove();
+                }
+            });
+
+            // Documents
+            const docContainer = document.getElementById('documentContainer');
+            const addDocBtn = document.getElementById('addDocBtn');
+            let docIdx = 0;
+
+            addDocBtn.addEventListener('click', function() {
+                const row = document.createElement('div');
+                row.className = 'doc-row';
+                row.innerHTML = `
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-3">
+                            <label class="form-label small mb-1 fw-semibold">Document Name</label>
+                            <input type="text" name="documents[${docIdx}][name]" class="form-control form-control-sm" placeholder="e.g. Immunization Record" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small mb-1 fw-semibold">Document Type</label>
+                            <select name="documents[${docIdx}][doc_type]" class="form-select form-select-sm" required>
+                                <option value="birth_certificate">Birth Certificate</option>
+                                <option value="medical_form">Medical Form / Immunization</option>
+                                <option value="custody_agreement">Custody Agreement</option>
+                                <option value="other" selected>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small mb-1 fw-semibold">Expiry Date</label>
+                            <input type="date" name="documents[${docIdx}][expiry_date]" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small mb-1 fw-semibold">File (PDF, Doc, Image)</label>
+                            <input type="file" name="documents[${docIdx}][file]" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp" required>
+                        </div>
+                        <div class="col-md-1 text-end pt-3">
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-doc-btn" title="Remove"><i class="bi bi-trash"></i></button>
+                        </div>
+                    </div>`;
+                docContainer.appendChild(row);
+                docIdx++;
+            });
+
+            docContainer.addEventListener('click', function(e) {
+                if (e.target.closest('.remove-doc-btn')) {
+                    e.target.closest('.doc-row').remove();
                 }
             });
 
