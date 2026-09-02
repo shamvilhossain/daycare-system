@@ -5,6 +5,7 @@ use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\ChildController;
+use App\Http\Controllers\EnrollmentController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -44,6 +45,13 @@ Route::middleware('auth')->group(function () {
         Route::resource('/admin/children', ChildController::class, ['as' => 'admin']);
         Route::get('/admin/documents/{document}/download', [ChildController::class, 'downloadDocument'])->name('admin.documents.download');
         Route::delete('/admin/documents/{document}', [ChildController::class, 'destroyDocument'])->name('admin.documents.destroy');
+
+        // Enrollments management
+        Route::resource('/admin/enrollments', EnrollmentController::class, ['as' => 'admin']);
+        Route::patch('/admin/enrollments/{enrollment}/approve', [EnrollmentController::class, 'approve'])->name('admin.enrollments.approve');
+        Route::patch('/admin/enrollments/{enrollment}/reject', [EnrollmentController::class, 'reject'])->name('admin.enrollments.reject');
+        Route::patch('/admin/enrollments/{enrollment}/withdraw', [EnrollmentController::class, 'withdraw'])->name('admin.enrollments.withdraw');
+        Route::patch('/admin/enrollments/{enrollment}/graduate', [EnrollmentController::class, 'graduate'])->name('admin.enrollments.graduate');
 
         // Role-Permission management
         Route::get('/admin/role-permissions', [RolePermissionController::class, 'index'])->name('admin.role-permissions.index');
