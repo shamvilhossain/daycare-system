@@ -3,6 +3,8 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProgramController;
+use App\Http\Controllers\ChildController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -34,6 +36,12 @@ Route::middleware('auth')->group(function () {
         Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
         Route::patch('/admin/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('admin.users.toggle-status');
         Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+
+        // Programs management
+        Route::resource('/admin/programs', ProgramController::class, ['as' => 'admin']);
+
+        // Children management
+        Route::resource('/admin/children', ChildController::class, ['as' => 'admin']);
 
         // Role-Permission management
         Route::get('/admin/role-permissions', [RolePermissionController::class, 'index'])->name('admin.role-permissions.index');

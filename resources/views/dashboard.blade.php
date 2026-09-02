@@ -295,7 +295,7 @@
 
                         <li class="nav-header">MANAGEMENT</li>
                         <li class="nav-item">
-                            <a href="#" class="nav-link">
+                            <a href="{{ route('admin.children.index') }}" class="nav-link">
                                 <i class="nav-icon bi bi-people-fill"></i>
                                 <p>Children</p>
                             </a>
@@ -327,6 +327,12 @@
 
                         @role('admin')
                         <li class="nav-header">ADMIN</li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.programs.index') }}" class="nav-link">
+                                <i class="nav-icon bi bi-book-half"></i>
+                                <p>Programs</p>
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a href="{{ route('admin.users.index') }}" class="nav-link">
                                 <i class="nav-icon bi bi-person-lines-fill"></i>
