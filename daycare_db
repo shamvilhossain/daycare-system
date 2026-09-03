@@ -1,0 +1,972 @@
+/*
+SQLyog Community v13.3.1 (64 bit)
+MySQL - 8.0.30 : Database - daycare_db
+*********************************************************************
+*/
+
+/*!40101 SET NAMES utf8 */;
+
+/*!40101 SET SQL_MODE=''*/;
+
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+CREATE DATABASE /*!32312 IF NOT EXISTS*/`daycare_db` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+
+USE `daycare_db`;
+
+/*Table structure for table `activities` */
+
+DROP TABLE IF EXISTS `activities`;
+
+CREATE TABLE `activities` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `category` enum('art','music','outdoor','reading','motor_skills','sensory','cognitive','social','language','math','science','other') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `materials_needed` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `duration_minutes` smallint unsigned DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `activities` */
+
+insert  into `activities`(`id`,`name`,`category`,`description`,`materials_needed`,`duration_minutes`,`is_active`,`created_at`,`updated_at`) values 
+(1,'Finger Painting','art','Creative expression using water-based paint','Paper, non-toxic finger paints, aprons',30,1,'2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(2,'Sing-Along Time','music','Singing nursery rhymes and clapping games','Song sheets, hand drums',20,1,'2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(3,'Sand Pit Play','sensory','Sensory exploration with wet and dry sand','Sand toys, buckets, shovels',45,1,'2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(4,'Storytelling Hour','reading','Reading educational children books aloud','Picture books',30,1,'2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(5,'Building Blocks Challenge','motor_skills','Building structures to develop fine motor skills','Wooden block sets',40,1,'2026-08-27 05:09:55','2026-08-27 05:09:55');
+
+/*Table structure for table `activity_media` */
+
+DROP TABLE IF EXISTS `activity_media`;
+
+CREATE TABLE `activity_media` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `activity_occurrence_id` bigint unsigned NOT NULL,
+  `file_url` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `media_type` enum('photo','video') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `caption` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `activity_media_activity_occurrence_id_foreign` (`activity_occurrence_id`),
+  CONSTRAINT `activity_media_activity_occurrence_id_foreign` FOREIGN KEY (`activity_occurrence_id`) REFERENCES `activity_occurrences` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `activity_media` */
+
+insert  into `activity_media`(`id`,`activity_occurrence_id`,`file_url`,`media_type`,`caption`,`created_at`,`updated_at`) values 
+(1,1,'uploads/activities/painting1.jpg','photo','Aria creating her masterpiece','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(2,2,'uploads/activities/singing.mp4','video','Singing rhymes together','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(3,3,'uploads/activities/sandpit.jpg','photo','Fun in the sand pit','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(4,5,'uploads/activities/blocks.jpg','photo','Building the high tower','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(5,1,'uploads/activities/painting2.jpg','photo','Group painting photo','2026-08-27 05:09:55','2026-08-27 05:09:55');
+
+/*Table structure for table `activity_occurrences` */
+
+DROP TABLE IF EXISTS `activity_occurrences`;
+
+CREATE TABLE `activity_occurrences` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `activity_id` bigint unsigned NOT NULL,
+  `program_id` bigint unsigned NOT NULL,
+  `staff_id` bigint unsigned NOT NULL,
+  `occurrence_date` date NOT NULL,
+  `start_time` time DEFAULT NULL,
+  `end_time` time DEFAULT NULL,
+  `status` enum('planned','completed','partial','cancelled') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'planned',
+  `materials_used` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `observations` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `activity_occurrences_activity_id_foreign` (`activity_id`),
+  KEY `activity_occurrences_program_id_foreign` (`program_id`),
+  KEY `activity_occurrences_staff_id_foreign` (`staff_id`),
+  CONSTRAINT `activity_occurrences_activity_id_foreign` FOREIGN KEY (`activity_id`) REFERENCES `activities` (`id`),
+  CONSTRAINT `activity_occurrences_program_id_foreign` FOREIGN KEY (`program_id`) REFERENCES `programs` (`id`),
+  CONSTRAINT `activity_occurrences_staff_id_foreign` FOREIGN KEY (`staff_id`) REFERENCES `staff` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `activity_occurrences` */
+
+insert  into `activity_occurrences`(`id`,`activity_id`,`program_id`,`staff_id`,`occurrence_date`,`start_time`,`end_time`,`status`,`materials_used`,`observations`,`created_at`,`updated_at`) values 
+(1,1,1,1,'2023-05-10','10:00:00','10:30:00','completed','Paper, green and red paints','Kids loved mixing colors','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(2,2,2,2,'2023-05-10','11:00:00','11:20:00','completed','Hand drums','Very energetic participation','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(3,3,3,3,'2023-05-10','15:00:00','15:45:00','completed','Buckets and shovels','Some sand throwing, redirect needed','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(4,4,4,4,'2023-05-10','13:00:00','13:30:00','partial','Adventure book','Shortened due to short attention spans today','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(5,5,5,1,'2023-05-10','09:00:00','09:40:00','completed','Wooden blocks','Aria built a high tower successfully','2026-08-27 05:09:55','2026-08-27 05:09:55');
+
+/*Table structure for table `announcements` */
+
+DROP TABLE IF EXISTS `announcements`;
+
+CREATE TABLE `announcements` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `staff_id` bigint unsigned NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `audience` enum('all','parents','staff') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `published_at` timestamp NULL DEFAULT NULL,
+  `expires_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `announcements_staff_id_foreign` (`staff_id`),
+  CONSTRAINT `announcements_staff_id_foreign` FOREIGN KEY (`staff_id`) REFERENCES `staff` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `announcements` */
+
+insert  into `announcements`(`id`,`staff_id`,`title`,`content`,`audience`,`published_at`,`expires_at`,`created_at`,`updated_at`) values 
+(1,5,'Summer Camp Registration Open','Registration for the upcoming Summer Camp is now open for all programs.','parents','2023-05-01 08:00:00','2023-06-01 18:00:00','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(2,5,'Staff Meeting on Friday','A mandatory training and review meeting for all staff will be held this Friday at 6 PM.','staff','2023-05-08 09:00:00','2023-05-12 18:00:00','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(3,5,'Daycare Closed for Eid Holiday','Please note that the daycare will remain closed during the Eid holidays from June 27th to June 29th.','all','2023-05-15 08:00:00','2023-06-30 18:00:00','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(4,5,'New Healthy Menu Options','Starting next week, we are introducing organic fruit snacks to our menu.','parents','2023-05-10 10:00:00','2023-05-20 18:00:00','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(5,5,'Safety Protocol Updates','Please review the updated emergency fire drill evacuation map posted in the staff lounge.','staff','2023-05-02 08:00:00','2023-05-31 18:00:00','2026-08-27 05:09:55','2026-08-27 05:09:55');
+
+/*Table structure for table `attendance` */
+
+DROP TABLE IF EXISTS `attendance`;
+
+CREATE TABLE `attendance` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `child_id` bigint unsigned NOT NULL,
+  `program_id` bigint unsigned NOT NULL,
+  `attendance_date` date NOT NULL,
+  `check_in_time` time DEFAULT NULL,
+  `check_out_time` time DEFAULT NULL,
+  `status` enum('present','absent','late','excused') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'present',
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `attendance_child_id_foreign` (`child_id`),
+  KEY `attendance_program_id_foreign` (`program_id`),
+  CONSTRAINT `attendance_child_id_foreign` FOREIGN KEY (`child_id`) REFERENCES `children` (`id`),
+  CONSTRAINT `attendance_program_id_foreign` FOREIGN KEY (`program_id`) REFERENCES `programs` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `attendance` */
+
+insert  into `attendance`(`id`,`child_id`,`program_id`,`attendance_date`,`check_in_time`,`check_out_time`,`status`,`notes`,`created_at`,`updated_at`) values 
+(1,1,1,'2023-05-10','08:05:00','16:55:00','present','On time','2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(2,2,2,'2023-05-10','08:45:00','12:30:00','late','Stuck in traffic','2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(3,3,5,'2023-05-10',NULL,NULL,'absent','Fever','2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(4,4,3,'2023-05-10','14:00:00','18:00:00','present',NULL,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(5,5,4,'2023-05-10','09:15:00','15:45:00','present','Drop in session','2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(6,2,2,'2026-09-03','03:57:33',NULL,'present',NULL,'2026-09-03 03:57:33','2026-09-03 03:57:33'),
+(7,5,5,'2026-09-03','03:57:00',NULL,'present',NULL,'2026-09-03 03:58:05','2026-09-03 03:58:05');
+
+/*Table structure for table `cache` */
+
+DROP TABLE IF EXISTS `cache`;
+
+CREATE TABLE `cache` (
+  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` mediumtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `expiration` bigint NOT NULL,
+  PRIMARY KEY (`key`),
+  KEY `cache_expiration_index` (`expiration`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `cache` */
+
+/*Table structure for table `cache_locks` */
+
+DROP TABLE IF EXISTS `cache_locks`;
+
+CREATE TABLE `cache_locks` (
+  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `owner` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `expiration` bigint NOT NULL,
+  PRIMARY KEY (`key`),
+  KEY `cache_locks_expiration_index` (`expiration`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `cache_locks` */
+
+/*Table structure for table `child_daily_logs` */
+
+DROP TABLE IF EXISTS `child_daily_logs`;
+
+CREATE TABLE `child_daily_logs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `child_id` bigint unsigned NOT NULL,
+  `staff_id` bigint unsigned NOT NULL,
+  `activity_occurrence_id` bigint unsigned DEFAULT NULL,
+  `log_date` date NOT NULL,
+  `log_type` enum('nap','meal','bottle','diaper_change','activity','incident','special_program','medication','other') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `start_time` time DEFAULT NULL,
+  `end_time` time DEFAULT NULL,
+  `meal_type` enum('breakfast','lunch','snack','bottle') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `items_served` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `amount_eaten` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `quality` enum('good','fair','poor','refused') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_completed` tinyint(1) DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `child_daily_logs_child_id_foreign` (`child_id`),
+  KEY `child_daily_logs_staff_id_foreign` (`staff_id`),
+  KEY `child_daily_logs_activity_occurrence_id_foreign` (`activity_occurrence_id`),
+  CONSTRAINT `child_daily_logs_activity_occurrence_id_foreign` FOREIGN KEY (`activity_occurrence_id`) REFERENCES `activity_occurrences` (`id`),
+  CONSTRAINT `child_daily_logs_child_id_foreign` FOREIGN KEY (`child_id`) REFERENCES `children` (`id`),
+  CONSTRAINT `child_daily_logs_staff_id_foreign` FOREIGN KEY (`staff_id`) REFERENCES `staff` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `child_daily_logs` */
+
+insert  into `child_daily_logs`(`id`,`child_id`,`staff_id`,`activity_occurrence_id`,`log_date`,`log_type`,`start_time`,`end_time`,`meal_type`,`items_served`,`amount_eaten`,`quality`,`is_completed`,`notes`,`created_at`,`updated_at`) values 
+(1,1,1,1,'2023-05-10','activity','10:00:00','10:30:00',NULL,NULL,NULL,NULL,1,'Participated eagerly in finger painting','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(2,2,2,NULL,'2023-05-10','nap','12:00:00','13:30:00',NULL,NULL,NULL,NULL,NULL,'Slept soundly','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(3,3,3,NULL,'2023-05-10','meal','11:30:00','12:00:00','lunch','Macaroni and cheese, apples slices','All','good',NULL,'Ate very well today','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(4,4,4,NULL,'2023-05-10','diaper_change','09:30:00',NULL,NULL,NULL,NULL,NULL,NULL,'Wet diaper changed, no rash','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(5,5,1,NULL,'2023-05-10','incident','14:15:00',NULL,NULL,NULL,NULL,NULL,NULL,'Slipped on playground, minor scratch on left knee, ice applied','2026-08-27 05:09:55','2026-08-27 05:09:55');
+
+/*Table structure for table `children` */
+
+DROP TABLE IF EXISTS `children`;
+
+CREATE TABLE `children` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `first_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `last_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `date_of_birth` date NOT NULL,
+  `allergies` text COLLATE utf8mb4_unicode_ci,
+  `medical_notes` text COLLATE utf8mb4_unicode_ci,
+  `photo_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `ec_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Emergency contact name',
+  `ec_relationship` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'e.g. Grandmother, Uncle',
+  `ec_phone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Emergency contact phone',
+  `ec_authorized_pickup` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Authorized to pick up child',
+  `additional_contacts` json DEFAULT NULL COMMENT 'Array of extra emergency contacts',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `children` */
+
+insert  into `children`(`id`,`first_name`,`last_name`,`date_of_birth`,`allergies`,`medical_notes`,`photo_url`,`is_active`,`ec_name`,`ec_relationship`,`ec_phone`,`ec_authorized_pickup`,`additional_contacts`,`created_at`,`updated_at`) values 
+(1,'Aria','Rahman','2022-04-12','Peanuts','Asthma',NULL,1,'Zakir Rahman','Uncle','01711-999001',1,NULL,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(2,'Zayd','Chowdhury','2021-08-20',NULL,'None',NULL,1,'Laila Chowdhury','Grandmother','01711-999002',1,NULL,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(3,'Yusuf','Ahmed','2023-01-15','Milk','Eczema',NULL,1,'Rafiq Ahmed','Grandfather','01711-999003',0,NULL,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(4,'Sara','Yasmin','2019-10-05',NULL,NULL,'children/36Dr7luUNq2yjqhSWmUWcLOUSsXtaxT6KDVKGpo0.jpg',1,'Nabila Yasmin','Aunt','01711-999004',1,NULL,'2026-08-27 05:09:54','2026-09-02 06:32:58'),
+(5,'Ryan','Hasan','2020-03-30','Eggs',NULL,NULL,1,'Imran Hasan','Uncle','01711-999005',1,NULL,'2026-08-27 05:09:54','2026-08-27 05:09:54');
+
+/*Table structure for table `documents` */
+
+DROP TABLE IF EXISTS `documents`;
+
+CREATE TABLE `documents` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `child_id` bigint unsigned NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `doc_type` enum('birth_certificate','custody_agreement','medical_form','other') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_url` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `expiry_date` date DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `documents_child_id_foreign` (`child_id`),
+  CONSTRAINT `documents_child_id_foreign` FOREIGN KEY (`child_id`) REFERENCES `children` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `documents` */
+
+insert  into `documents`(`id`,`child_id`,`name`,`doc_type`,`file_url`,`expiry_date`,`created_at`,`updated_at`) values 
+(1,1,'Aria Birth Certificate','birth_certificate','uploads/documents/aria_birth.pdf',NULL,'2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(2,1,'Aria Medical Immunization','medical_form','uploads/documents/aria_medical.pdf','2025-05-10','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(3,2,'Zayd Birth Certificate','birth_certificate','uploads/documents/zayd_birth.pdf',NULL,'2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(5,4,'Sara Allergy Action Plan','medical_form','uploads/documents/sara_allergy.pdf','2024-12-31','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(6,3,'Birth','birth_certificate','documents/La6tNbukOO98ghenXONEOcotGJkYfgtqRau4NZuE.jpg',NULL,'2026-09-02 10:04:16','2026-09-02 10:04:16');
+
+/*Table structure for table `enrollments` */
+
+DROP TABLE IF EXISTS `enrollments`;
+
+CREATE TABLE `enrollments` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `child_id` bigint unsigned NOT NULL,
+  `program_id` bigint unsigned NOT NULL,
+  `service_type` enum('full_day','half_day','after_school','drop_in') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` enum('pending','active','withdrawn','graduated','rejected') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `start_date` date NOT NULL,
+  `end_date` date DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `created_by` bigint unsigned NOT NULL,
+  `approved_at` timestamp NULL DEFAULT NULL,
+  `approved_by` bigint unsigned DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `enrollments_child_id_foreign` (`child_id`),
+  KEY `enrollments_program_id_foreign` (`program_id`),
+  KEY `enrollments_created_by_foreign` (`created_by`),
+  KEY `enrollments_approved_by_foreign` (`approved_by`),
+  CONSTRAINT `enrollments_approved_by_foreign` FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`),
+  CONSTRAINT `enrollments_child_id_foreign` FOREIGN KEY (`child_id`) REFERENCES `children` (`id`),
+  CONSTRAINT `enrollments_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
+  CONSTRAINT `enrollments_program_id_foreign` FOREIGN KEY (`program_id`) REFERENCES `programs` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `enrollments` */
+
+insert  into `enrollments`(`id`,`child_id`,`program_id`,`service_type`,`status`,`start_date`,`end_date`,`notes`,`created_by`,`approved_at`,`approved_by`,`created_at`,`updated_at`) values 
+(1,1,1,'full_day','active','2023-01-01','2024-01-01','First enrollment',1,'2023-01-01 09:00:00',1,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(2,2,2,'half_day','active','2023-02-01',NULL,NULL,1,'2023-02-01 10:00:00',1,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(3,3,5,'full_day','pending','2023-09-01',NULL,'Awaiting approval',4,NULL,NULL,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(4,4,3,'after_school','active','2023-03-01','2023-12-31',NULL,1,'2023-03-01 08:30:00',1,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(5,5,4,'drop_in','graduated','2022-06-01','2022-12-01','Successfully completed',1,'2022-06-01 09:15:00',1,'2026-08-27 05:09:54','2026-08-27 05:09:54');
+
+/*Table structure for table `failed_jobs` */
+
+DROP TABLE IF EXISTS `failed_jobs`;
+
+CREATE TABLE `failed_jobs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `uuid` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `connection` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `queue` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `payload` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `exception` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `failed_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `failed_jobs_uuid_unique` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `failed_jobs` */
+
+/*Table structure for table `invoice_items` */
+
+DROP TABLE IF EXISTS `invoice_items`;
+
+CREATE TABLE `invoice_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `invoice_id` bigint unsigned NOT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'e.g., tuition, Late Pickup Fee.',
+  `amount` decimal(10,2) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `invoice_items_invoice_id_foreign` (`invoice_id`),
+  CONSTRAINT `invoice_items_invoice_id_foreign` FOREIGN KEY (`invoice_id`) REFERENCES `invoices` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `invoice_items` */
+
+insert  into `invoice_items`(`id`,`invoice_id`,`description`,`amount`,`created_at`,`updated_at`) values 
+(1,1,'Infant Care Tuition - May 2023',500.00,'2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(2,1,'Meal Plan Fee - May 2023',50.00,'2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(3,2,'Toddler Playgroup Tuition - May 2023',350.00,'2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(4,3,'Preschool Program Tuition - May 2023',450.00,'2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(5,4,'After School Care Tuition - May 2023',250.00,'2026-08-27 05:09:55','2026-08-27 05:09:55');
+
+/*Table structure for table `invoices` */
+
+DROP TABLE IF EXISTS `invoices`;
+
+CREATE TABLE `invoices` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `parent_id` bigint unsigned NOT NULL,
+  `child_id` bigint unsigned NOT NULL,
+  `invoice_number` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `invoice_date` date NOT NULL,
+  `due_date` date NOT NULL,
+  `total_amount` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `status` enum('draft','paid','overdue','cancelled') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `invoices_invoice_number_unique` (`invoice_number`),
+  KEY `invoices_parent_id_foreign` (`parent_id`),
+  KEY `invoices_child_id_foreign` (`child_id`),
+  CONSTRAINT `invoices_child_id_foreign` FOREIGN KEY (`child_id`) REFERENCES `children` (`id`),
+  CONSTRAINT `invoices_parent_id_foreign` FOREIGN KEY (`parent_id`) REFERENCES `parents` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `invoices` */
+
+insert  into `invoices`(`id`,`parent_id`,`child_id`,`invoice_number`,`invoice_date`,`due_date`,`total_amount`,`status`,`created_at`,`updated_at`) values 
+(1,1,1,'INV-2023-001','2023-05-01','2023-05-15',550.00,'paid','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(2,2,2,'INV-2023-002','2023-05-01','2023-05-15',350.00,'paid','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(3,3,3,'INV-2023-003','2023-05-01','2023-05-15',450.00,'overdue','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(4,4,4,'INV-2023-004','2023-05-01','2023-05-15',250.00,'draft','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(5,5,5,'INV-2023-005','2023-05-01','2023-05-15',300.00,'cancelled','2026-08-27 05:09:55','2026-08-27 05:09:55');
+
+/*Table structure for table `job_batches` */
+
+DROP TABLE IF EXISTS `job_batches`;
+
+CREATE TABLE `job_batches` (
+  `id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `total_jobs` int NOT NULL,
+  `pending_jobs` int NOT NULL,
+  `failed_jobs` int NOT NULL,
+  `failed_job_ids` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `options` mediumtext COLLATE utf8mb4_unicode_ci,
+  `cancelled_at` int DEFAULT NULL,
+  `created_at` int NOT NULL,
+  `finished_at` int DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `job_batches` */
+
+/*Table structure for table `jobs` */
+
+DROP TABLE IF EXISTS `jobs`;
+
+CREATE TABLE `jobs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `queue` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `payload` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `attempts` smallint unsigned NOT NULL,
+  `reserved_at` int unsigned DEFAULT NULL,
+  `available_at` int unsigned NOT NULL,
+  `created_at` int unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `jobs_queue_index` (`queue`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `jobs` */
+
+/*Table structure for table `migrations` */
+
+DROP TABLE IF EXISTS `migrations`;
+
+CREATE TABLE `migrations` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `migration` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `batch` int NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `migrations` */
+
+insert  into `migrations`(`id`,`migration`,`batch`) values 
+(1,'0001_01_01_000000_create_users_table',1),
+(2,'0001_01_01_000001_create_cache_table',1),
+(3,'0001_01_01_000002_create_jobs_table',1),
+(4,'2026_05_05_062009_create_personal_access_tokens_table',1),
+(5,'2026_05_05_062605_create_permission_tables',1),
+(6,'2026_05_05_064851_create_parents_table',1),
+(7,'2026_05_05_064901_create_staff_table',1),
+(8,'2026_05_05_064939_create_programs_table',1),
+(9,'2026_05_05_065109_create_children_table',1),
+(10,'2026_05_05_065111_create_parent_child_table',1),
+(11,'2026_05_05_065233_create_enrollments_table',1),
+(12,'2026_05_05_065353_create_waitlist_table',1),
+(13,'2026_05_05_065400_create_attendance_table',1),
+(14,'2026_05_05_065415_create_documents_table',1),
+(15,'2026_05_05_065422_create_activities_table',1),
+(16,'2026_05_05_065430_create_activity_occurrences_table',1),
+(17,'2026_05_05_065435_create_child_daily_logs_table',1),
+(18,'2026_05_05_065440_create_activity_media_table',1),
+(19,'2026_05_05_065601_create_invoices_table',1),
+(20,'2026_05_05_065608_create_invoice_items_table',1),
+(21,'2026_05_05_065615_create_payments_table',1),
+(22,'2026_05_05_065713_create_announcements_table',1);
+
+/*Table structure for table `model_has_permissions` */
+
+DROP TABLE IF EXISTS `model_has_permissions`;
+
+CREATE TABLE `model_has_permissions` (
+  `permission_id` bigint unsigned NOT NULL,
+  `model_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `model_id` bigint unsigned NOT NULL,
+  PRIMARY KEY (`permission_id`,`model_id`,`model_type`),
+  KEY `model_has_permissions_model_id_model_type_index` (`model_id`,`model_type`),
+  CONSTRAINT `model_has_permissions_permission_id_foreign` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `model_has_permissions` */
+
+/*Table structure for table `model_has_roles` */
+
+DROP TABLE IF EXISTS `model_has_roles`;
+
+CREATE TABLE `model_has_roles` (
+  `role_id` bigint unsigned NOT NULL,
+  `model_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `model_id` bigint unsigned NOT NULL,
+  PRIMARY KEY (`role_id`,`model_id`,`model_type`),
+  KEY `model_has_roles_model_id_model_type_index` (`model_id`,`model_type`),
+  CONSTRAINT `model_has_roles_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `model_has_roles` */
+
+insert  into `model_has_roles`(`role_id`,`model_type`,`model_id`) values 
+(1,'App\\Models\\User',1),
+(3,'App\\Models\\User',2),
+(3,'App\\Models\\User',3),
+(3,'App\\Models\\User',4),
+(3,'App\\Models\\User',5),
+(3,'App\\Models\\User',6),
+(2,'App\\Models\\User',7),
+(2,'App\\Models\\User',8),
+(2,'App\\Models\\User',9),
+(2,'App\\Models\\User',10),
+(2,'App\\Models\\User',11),
+(3,'App\\Models\\User',13);
+
+/*Table structure for table `parent_child` */
+
+DROP TABLE IF EXISTS `parent_child`;
+
+CREATE TABLE `parent_child` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `parent_id` bigint unsigned NOT NULL,
+  `child_id` bigint unsigned NOT NULL,
+  `relationship` enum('mother','father','step_parent','grandparent','legal_guardian','other') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_primary` tinyint(1) NOT NULL DEFAULT '0',
+  `can_pickup` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `parent_child_parent_id_child_id_unique` (`parent_id`,`child_id`),
+  KEY `parent_child_child_id_foreign` (`child_id`),
+  CONSTRAINT `parent_child_child_id_foreign` FOREIGN KEY (`child_id`) REFERENCES `children` (`id`),
+  CONSTRAINT `parent_child_parent_id_foreign` FOREIGN KEY (`parent_id`) REFERENCES `parents` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `parent_child` */
+
+insert  into `parent_child`(`id`,`parent_id`,`child_id`,`relationship`,`is_primary`,`can_pickup`,`created_at`,`updated_at`) values 
+(1,1,1,'mother',1,1,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(2,2,2,'father',1,1,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(3,3,3,'father',1,1,'2026-08-27 05:09:54','2026-09-02 10:04:16'),
+(4,4,4,'mother',1,1,'2026-08-27 05:09:54','2026-09-02 06:32:58'),
+(5,5,5,'father',1,1,'2026-08-27 05:09:54','2026-08-27 05:09:54');
+
+/*Table structure for table `parents` */
+
+DROP TABLE IF EXISTS `parents`;
+
+CREATE TABLE `parents` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint unsigned NOT NULL,
+  `first_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `last_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `nid` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `mobile` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `occupation` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` text COLLATE utf8mb4_unicode_ci,
+  `image` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `parents_user_id_foreign` (`user_id`),
+  CONSTRAINT `parents_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `parents` */
+
+insert  into `parents`(`id`,`user_id`,`first_name`,`last_name`,`nid`,`mobile`,`occupation`,`city`,`address`,`image`,`created_at`,`updated_at`) values 
+(1,2,'Fatima','Rahman','1234567890','01711-000001','Teacher','Dhaka','Mirpur, Dhaka',NULL,'2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(2,3,'Karim','Chowdhury','1234567891','01711-000002','Engineer','Dhaka','Uttara, Dhaka',NULL,'2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(3,4,'Rahim','Ahmed','1234567892','01711-000003','Doctor','Chittagong','Halishahar, Chittagong',NULL,'2026-08-27 05:09:53','2026-08-27 05:09:53'),
+(4,5,'Sabina','Yasmin','1234567893','01711-000004','Banker','Sylhet','Zindabazar, Sylhet',NULL,'2026-08-27 05:09:53','2026-08-27 05:09:53'),
+(5,6,'Arif','Hasan','1234567894','01711-000005','Businessperson','Rajshahi','Motihar, Rajshahi',NULL,'2026-08-27 05:09:53','2026-08-27 05:09:53'),
+(6,13,'Jamal','Miah',NULL,'01822222222','Police','Dhaka','Dhaka','profile_images/aE6ywxXaaGKsSMTqBlPstwVUnlIuPCoT6Mqyd9z2.jpg','2026-09-02 04:14:02','2026-09-02 04:14:02');
+
+/*Table structure for table `password_reset_tokens` */
+
+DROP TABLE IF EXISTS `password_reset_tokens`;
+
+CREATE TABLE `password_reset_tokens` (
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `token` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `password_reset_tokens` */
+
+/*Table structure for table `payments` */
+
+DROP TABLE IF EXISTS `payments`;
+
+CREATE TABLE `payments` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `invoice_id` bigint unsigned NOT NULL,
+  `amount_paid` decimal(10,2) NOT NULL,
+  `payment_method` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `transaction_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `payment_date` datetime NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `payments_invoice_id_foreign` (`invoice_id`),
+  CONSTRAINT `payments_invoice_id_foreign` FOREIGN KEY (`invoice_id`) REFERENCES `invoices` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `payments` */
+
+insert  into `payments`(`id`,`invoice_id`,`amount_paid`,`payment_method`,`transaction_id`,`payment_date`,`created_at`,`updated_at`) values 
+(1,1,500.00,'credit_card','TXN_CREDIT_99881','2023-05-10 14:00:00','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(2,1,50.00,'cash','TXN_CASH_001','2023-05-11 09:30:00','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(3,2,350.00,'bank_transfer','TXN_BANK_88221','2023-05-09 11:15:00','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(4,3,100.00,'credit_card','TXN_CREDIT_99882','2023-05-14 16:45:00','2026-08-27 05:09:55','2026-08-27 05:09:55'),
+(5,5,300.00,'bank_transfer','TXN_BANK_88222','2023-05-08 10:00:00','2026-08-27 05:09:55','2026-08-27 05:09:55');
+
+/*Table structure for table `permissions` */
+
+DROP TABLE IF EXISTS `permissions`;
+
+CREATE TABLE `permissions` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `guard_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `permissions_name_guard_name_unique` (`name`,`guard_name`)
+) ENGINE=InnoDB AUTO_INCREMENT=50 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `permissions` */
+
+insert  into `permissions`(`id`,`name`,`guard_name`,`created_at`,`updated_at`) values 
+(1,'children.view-any','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(2,'children.view','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(3,'children.create','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(4,'children.update','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(5,'children.delete','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(6,'guardian-child.view-any','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(7,'guardian-child.manage','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(8,'programs.view-any','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(9,'programs.view','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(10,'programs.create','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(11,'programs.update','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(12,'programs.delete','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(13,'enrollments.view-any','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(14,'enrollments.view','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(15,'enrollments.create','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(16,'enrollments.update','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(17,'enrollments.delete','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(18,'attendance.view-any','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(19,'attendance.view','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(20,'attendance.create','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(21,'attendance.update','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(22,'documents.view-any','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(23,'documents.create','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(24,'documents.delete','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(25,'activities.view-any','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(26,'activities.create','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(27,'activities.update','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(28,'activities.delete','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(29,'activity-occurrences.view-any','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(30,'activity-occurrences.create','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(31,'activity-occurrences.update','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(32,'child-daily-logs.view-any','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(33,'child-daily-logs.view','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(34,'child-daily-logs.create','web','2026-08-27 05:09:51','2026-08-27 05:09:51'),
+(35,'child-daily-logs.update','web','2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(36,'invoices.view-any','web','2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(37,'invoices.view','web','2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(38,'invoices.create','web','2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(39,'invoices.update','web','2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(40,'payments.view-any','web','2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(41,'payments.create','web','2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(42,'staff.view-any','web','2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(43,'staff.create','web','2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(44,'staff.update','web','2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(45,'staff.delete','web','2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(46,'announcements.view-any','web','2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(47,'announcements.create','web','2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(48,'reports.view','web','2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(49,'settings.manage','web','2026-08-27 05:09:52','2026-08-27 05:09:52');
+
+/*Table structure for table `personal_access_tokens` */
+
+DROP TABLE IF EXISTS `personal_access_tokens`;
+
+CREATE TABLE `personal_access_tokens` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `tokenable_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tokenable_id` bigint unsigned NOT NULL,
+  `name` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `token` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `abilities` text COLLATE utf8mb4_unicode_ci,
+  `last_used_at` timestamp NULL DEFAULT NULL,
+  `expires_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `personal_access_tokens_token_unique` (`token`),
+  KEY `personal_access_tokens_tokenable_type_tokenable_id_index` (`tokenable_type`,`tokenable_id`),
+  KEY `personal_access_tokens_expires_at_index` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `personal_access_tokens` */
+
+/*Table structure for table `programs` */
+
+DROP TABLE IF EXISTS `programs`;
+
+CREATE TABLE `programs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `service_type` enum('full_day','half_day','after_school','drop_in') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `billing_model` enum('monthly','daily','hourly') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `min_age_months` smallint unsigned DEFAULT NULL,
+  `max_age_months` smallint unsigned DEFAULT NULL,
+  `capacity` smallint unsigned NOT NULL,
+  `monthly_fee` decimal(8,2) DEFAULT NULL,
+  `daily_rate` decimal(8,2) DEFAULT NULL,
+  `hourly_rate` decimal(8,2) DEFAULT NULL,
+  `day_start_time` time DEFAULT NULL,
+  `day_end_time` time DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `programs` */
+
+insert  into `programs`(`id`,`name`,`service_type`,`billing_model`,`min_age_months`,`max_age_months`,`capacity`,`monthly_fee`,`daily_rate`,`hourly_rate`,`day_start_time`,`day_end_time`,`is_active`,`created_at`,`updated_at`) values 
+(1,'Infant Care','full_day','monthly',3,12,10,500.00,25.00,5.00,'08:00:00','17:00:00',1,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(2,'Toddler Playgroup','half_day','monthly',13,36,15,350.00,18.00,4.00,'08:30:00','12:30:00',1,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(3,'After School Care','after_school','monthly',72,144,20,250.00,15.00,3.50,'14:00:00','18:00:00',1,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(4,'Drop-in Daycare','drop_in','hourly',12,120,8,NULL,30.00,6.00,'09:00:00','16:00:00',0,'2026-08-27 05:09:54','2026-09-02 05:46:14'),
+(5,'Preschool Program','full_day','monthly',37,71,18,450.00,22.00,4.50,'08:00:00','16:30:00',1,'2026-08-27 05:09:54','2026-08-27 05:09:54');
+
+/*Table structure for table `role_has_permissions` */
+
+DROP TABLE IF EXISTS `role_has_permissions`;
+
+CREATE TABLE `role_has_permissions` (
+  `permission_id` bigint unsigned NOT NULL,
+  `role_id` bigint unsigned NOT NULL,
+  PRIMARY KEY (`permission_id`,`role_id`),
+  KEY `role_has_permissions_role_id_foreign` (`role_id`),
+  CONSTRAINT `role_has_permissions_permission_id_foreign` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `role_has_permissions_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `role_has_permissions` */
+
+insert  into `role_has_permissions`(`permission_id`,`role_id`) values 
+(1,1),
+(2,1),
+(3,1),
+(4,1),
+(5,1),
+(6,1),
+(7,1),
+(8,1),
+(9,1),
+(10,1),
+(11,1),
+(12,1),
+(13,1),
+(14,1),
+(15,1),
+(16,1),
+(17,1),
+(18,1),
+(19,1),
+(20,1),
+(21,1),
+(22,1),
+(23,1),
+(25,1),
+(26,1),
+(27,1),
+(28,1),
+(29,1),
+(30,1),
+(31,1),
+(32,1),
+(33,1),
+(34,1),
+(35,1),
+(36,1),
+(37,1),
+(38,1),
+(39,1),
+(40,1),
+(41,1),
+(42,1),
+(43,1),
+(44,1),
+(45,1),
+(46,1),
+(47,1),
+(48,1),
+(49,1),
+(1,2),
+(2,2),
+(13,2),
+(14,2),
+(18,2),
+(19,2),
+(20,2),
+(21,2),
+(22,2),
+(23,2),
+(25,2),
+(29,2),
+(30,2),
+(31,2),
+(32,2),
+(33,2),
+(34,2),
+(35,2),
+(46,2),
+(1,3),
+(2,3),
+(13,3),
+(14,3),
+(18,3),
+(19,3),
+(22,3),
+(29,3),
+(32,3),
+(33,3),
+(36,3),
+(37,3),
+(40,3),
+(46,3);
+
+/*Table structure for table `roles` */
+
+DROP TABLE IF EXISTS `roles`;
+
+CREATE TABLE `roles` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `guard_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `roles_name_guard_name_unique` (`name`,`guard_name`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `roles` */
+
+insert  into `roles`(`id`,`name`,`guard_name`,`created_at`,`updated_at`) values 
+(1,'admin','web','2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(2,'staff','web','2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(3,'parent','web','2026-08-27 05:09:52','2026-08-27 05:09:52');
+
+/*Table structure for table `sessions` */
+
+DROP TABLE IF EXISTS `sessions`;
+
+CREATE TABLE `sessions` (
+  `id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_id` bigint unsigned DEFAULT NULL,
+  `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` text COLLATE utf8mb4_unicode_ci,
+  `payload` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `last_activity` int NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `sessions_user_id_index` (`user_id`),
+  KEY `sessions_last_activity_index` (`last_activity`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `sessions` */
+
+insert  into `sessions`(`id`,`user_id`,`ip_address`,`user_agent`,`payload`,`last_activity`) values 
+('Z9oAli8TzTexsQkfjNdUEhQuh4Rd6c8a4cly9qpC',1,'127.0.0.1','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:155.0) Gecko/20100101 Firefox/155.0','eyJfdG9rZW4iOiJBZlQzS3owVmxLTlVVdVg4eWl5ZEVaaWZXWGhaNjRNd1pCbFJqTTBPIiwiX3ByZXZpb3VzIjp7InVybCI6Imh0dHA6XC9cLzEyNy4wLjAuMTo4MDAwXC9hZG1pblwvY2hpbGQtZGFpbHktbG9nc1wvY2hpbGRcLzE/ZGF0ZT0yMDIzLTA1LTEwIiwicm91dGUiOiJhZG1pbi5jaGlsZC1kYWlseS1sb2dzLmNoaWxkLWRheSJ9LCJfZmxhc2giOnsib2xkIjpbXSwibmV3IjpbXX0sImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjoxfQ==',1788407930);
+
+/*Table structure for table `staff` */
+
+DROP TABLE IF EXISTS `staff`;
+
+CREATE TABLE `staff` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint unsigned NOT NULL,
+  `first_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `last_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `role` enum('teacher','assistant','admin') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `nid` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `date_of_birth` date DEFAULT NULL,
+  `hire_date` date DEFAULT NULL,
+  `image` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `note` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `staff_user_id_foreign` (`user_id`),
+  CONSTRAINT `staff_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `staff` */
+
+insert  into `staff`(`id`,`user_id`,`first_name`,`last_name`,`role`,`nid`,`date_of_birth`,`hire_date`,`image`,`note`,`is_active`,`created_at`,`updated_at`) values 
+(1,7,'Tania','Sultana','teacher','9876543210','1990-05-15','2023-01-10',NULL,'Senior teacher',1,'2026-08-27 05:09:53','2026-08-27 05:09:53'),
+(2,8,'Mizan','Rahman','teacher','9876543211','1992-08-20','2023-02-15',NULL,'Junior teacher',1,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(3,9,'Farhana','Akter','assistant','9876543212','1995-12-01','2023-05-01',NULL,'Assistant teacher',1,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(4,10,'Kamrul','Islam','assistant','9876543213','1994-03-10','2023-06-20','profile_images/RSXv1Pn27wJ2aS0kCY6eX61kCVSIQ7YisiAZJ3Tr.png','Assistant teacher',1,'2026-08-27 05:09:54','2026-09-02 04:08:26'),
+(5,11,'Nasrin','Jahan','admin','9876543214','1988-11-25','2022-09-01',NULL,'Office administrator',1,'2026-08-27 05:09:54','2026-08-27 05:09:54');
+
+/*Table structure for table `users` */
+
+DROP TABLE IF EXISTS `users`;
+
+CREATE TABLE `users` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `role` enum('admin','staff','parent') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `is_super_admin` tinyint(1) NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `email_verified_at` timestamp NULL DEFAULT NULL,
+  `last_login` timestamp NULL DEFAULT NULL,
+  `remember_token` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `users_email_unique` (`email`)
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `users` */
+
+insert  into `users`(`id`,`email`,`password`,`role`,`is_super_admin`,`is_active`,`email_verified_at`,`last_login`,`remember_token`,`created_at`,`updated_at`) values 
+(1,'admin@daycare.com','$2y$12$VrKn0nm712RLu80l8iuWQ..EJM4LR73f/VGYFRJs1nRPyiGr9I7BK','admin',0,1,NULL,NULL,NULL,'2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(2,'fatima.rahman@example.com','$2y$12$a206U1YAMYLkgm5eotjmmeB/Nl72HUtpeu.HtBrr17FGeXDEtI/4a','parent',0,1,NULL,NULL,NULL,'2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(3,'karim.chowdhury@example.com','$2y$12$aahcvW9j8V9wdnrKy6hYUemDsh7XjbgQG4Jm0yvwe.6i0ZymkS2/u','parent',0,1,NULL,NULL,NULL,'2026-08-27 05:09:52','2026-08-27 05:09:52'),
+(4,'rahim.ahmed@example.com','$2y$12$7puYMgeMe28yszfL4NaAier3gqeAvddUR2YJxhLQY6KJBsvuBGy5u','parent',0,1,NULL,NULL,NULL,'2026-08-27 05:09:53','2026-08-27 05:09:53'),
+(5,'sabina.yasmin@example.com','$2y$12$o0XnoKVntHd8vNGRqB42YuCDRkxi9RFAUN.5c/SezYJaxOsz6B3ha','parent',0,1,NULL,NULL,NULL,'2026-08-27 05:09:53','2026-08-27 05:09:53'),
+(6,'arif.hasan@example.com','$2y$12$.fpL4FisThXXqL5KHUikxOO0mxx7f246ApFdYrxfLsz7/vLr6IaMe','parent',0,1,NULL,NULL,NULL,'2026-08-27 05:09:53','2026-08-27 05:09:53'),
+(7,'tania.staff@example.com','$2y$12$mazeTmgQ8AubfbTK4l.sOuHbDfIh7FtkZ.yddwMLKJqeb8t.8OOC.','staff',0,1,NULL,NULL,NULL,'2026-08-27 05:09:53','2026-08-27 05:09:53'),
+(8,'mizan.staff@example.com','$2y$12$ezsvbN0LYM8pWwjj7L5vBe1v4ip5bk9QS2rzUwQA90ViCwrJV1HYC','staff',0,1,NULL,NULL,NULL,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(9,'farhana.staff@example.com','$2y$12$6dF6wfSylBAjF9AxAnL/u.nWFBJdCMVdB8geLq0bjKBp/EkB2mhDW','staff',0,1,NULL,NULL,NULL,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(10,'kamrul.staff@example.com','$2y$12$6mfOVUuoA3FUD3tBH7zxFuq9PK1Gp4dUEEgWOhJT9p71zRsyKSl26','staff',0,1,NULL,NULL,NULL,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(11,'nasrin.staff@example.com','$2y$12$Fa1rGMokQHgCUNHE/6JZ1uZn.IPKHSkRekWKA10UXGDHitboEug3.','staff',0,1,NULL,NULL,NULL,'2026-08-27 05:09:54','2026-08-27 05:09:54'),
+(13,'jamal@gmail.com','$2y$12$fo5Tw1mmDbQPBTKNr.WwceLkVEK1BffgDzYtzHGB/QecRojahh6/S','parent',0,1,NULL,NULL,NULL,'2026-09-02 04:14:02','2026-09-02 04:14:02');
+
+/*Table structure for table `waitlist` */
+
+DROP TABLE IF EXISTS `waitlist`;
+
+CREATE TABLE `waitlist` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `waitlist` */
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
