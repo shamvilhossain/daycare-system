@@ -293,6 +293,20 @@
                             </a>
                         </li>
 
+                        <li class="nav-header">DAILY OPERATIONS</li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.attendance.index') }}" class="nav-link">
+                                <i class="nav-icon bi bi-check2-circle"></i>
+                                <p>Attendance Desk</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.child-daily-logs.index') }}" class="nav-link">
+                                <i class="nav-icon bi bi-journal-text"></i>
+                                <p>Daily Child Logs</p>
+                            </a>
+                        </li>
+
                         <li class="nav-header">MANAGEMENT</li>
                         <li class="nav-item">
                             <a href="{{ route('admin.children.index') }}" class="nav-link">
@@ -506,29 +520,24 @@
                                     <h3 class="card-title"><i class="bi bi-lightning-fill me-2"></i>Quick Actions</h3>
                                 </div>
                                 <div class="card-body">
-                                    <a href="#" class="quick-action-btn">
-                                        <span class="action-icon bg-purple"><i class="bi bi-person-plus-fill"></i></span>
+                                    <a href="{{ route('admin.attendance.index') }}" class="quick-action-btn">
+                                        <span class="action-icon bg-emerald"><i class="bi bi-clock-history"></i></span>
+                                        <span>Attendance Desk</span>
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                    <a href="{{ route('admin.child-daily-logs.index') }}" class="quick-action-btn">
+                                        <span class="action-icon bg-purple"><i class="bi bi-journal-text"></i></span>
+                                        <span>Daily Child Logs</span>
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                    <a href="{{ route('admin.children.create') }}" class="quick-action-btn">
+                                        <span class="action-icon bg-blue"><i class="bi bi-person-plus-fill"></i></span>
                                         <span>Add Child</span>
                                         <i class="bi bi-chevron-right"></i>
                                     </a>
-                                    <a href="#" class="quick-action-btn">
-                                        <span class="action-icon bg-pink"><i class="bi bi-person-badge"></i></span>
-                                        <span>Add Staff</span>
-                                        <i class="bi bi-chevron-right"></i>
-                                    </a>
-                                    <a href="#" class="quick-action-btn">
-                                        <span class="action-icon bg-emerald"><i class="bi bi-journal-plus"></i></span>
+                                    <a href="{{ route('admin.enrollments.create') }}" class="quick-action-btn">
+                                        <span class="action-icon bg-amber"><i class="bi bi-journal-plus"></i></span>
                                         <span>New Enrollment</span>
-                                        <i class="bi bi-chevron-right"></i>
-                                    </a>
-                                    <a href="#" class="quick-action-btn">
-                                        <span class="action-icon bg-amber"><i class="bi bi-calendar-plus"></i></span>
-                                        <span>Schedule Activity</span>
-                                        <i class="bi bi-chevron-right"></i>
-                                    </a>
-                                    <a href="#" class="quick-action-btn">
-                                        <span class="action-icon bg-blue"><i class="bi bi-cash-stack"></i></span>
-                                        <span>Record Payment</span>
                                         <i class="bi bi-chevron-right"></i>
                                     </a>
                                 </div>

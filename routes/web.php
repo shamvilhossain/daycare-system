@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\ChildDailyLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\UserController;
@@ -26,6 +28,26 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
+
+    // Daily Operations (Attendance & Child Daily Logs) - accessible by Admin & Staff
+    Route::middleware('role:admin|staff')->group(function () {
+        // Attendance Desk
+        Route::get('/admin/attendance', [AttendanceController::class, 'index'])->name('admin.attendance.index');
+        Route::post('/admin/attendance', [AttendanceController::class, 'store'])->name('admin.attendance.store');
+        Route::put('/admin/attendance/{attendance}', [AttendanceController::class, 'update'])->name('admin.attendance.update');
+        Route::delete('/admin/attendance/{attendance}', [AttendanceController::class, 'destroy'])->name('admin.attendance.destroy');
+        Route::post('/admin/attendance/check-in', [AttendanceController::class, 'checkIn'])->name('admin.attendance.check-in');
+        Route::post('/admin/attendance/{attendance}/check-out', [AttendanceController::class, 'checkOut'])->name('admin.attendance.check-out');
+        Route::post('/admin/attendance/mark-absent', [AttendanceController::class, 'markAbsent'])->name('admin.attendance.mark-absent');
+        Route::post('/admin/attendance/bulk', [AttendanceController::class, 'bulk'])->name('admin.attendance.bulk');
+
+        // Child Daily Logs
+        Route::get('/admin/child-daily-logs', [ChildDailyLogController::class, 'index'])->name('admin.child-daily-logs.index');
+        Route::get('/admin/child-daily-logs/child/{child}', [ChildDailyLogController::class, 'childDay'])->name('admin.child-daily-logs.child-day');
+        Route::post('/admin/child-daily-logs', [ChildDailyLogController::class, 'store'])->name('admin.child-daily-logs.store');
+        Route::put('/admin/child-daily-logs/{childDailyLog}', [ChildDailyLogController::class, 'update'])->name('admin.child-daily-logs.update');
+        Route::delete('/admin/child-daily-logs/{childDailyLog}', [ChildDailyLogController::class, 'destroy'])->name('admin.child-daily-logs.destroy');
+    });
 
     // Admin-only management routes
     Route::middleware('role:admin')->group(function () {
@@ -60,3 +82,4 @@ Route::middleware('auth')->group(function () {
         Route::delete('/admin/role-permissions/{role}', [RolePermissionController::class, 'destroy'])->name('admin.role-permissions.destroy');
     });
 });
+
