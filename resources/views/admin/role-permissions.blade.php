@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Manage role permissions — create roles and assign Spatie permissions.">
-    <title>Role Permissions | Daycare System</title>
+    <title>Role Permissions | KinderCare</title>
 
     <!-- Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -416,7 +416,7 @@
             <div class="sidebar-brand">
                 <a href="{{ route('dashboard') }}" class="brand-link">
                     <i class="bi bi-house-heart-fill brand-image" style="font-size:1.4rem;"></i>
-                    <span class="brand-text fw-light"><b>Daycare</b>System</span>
+                    <span class="brand-text fw-light"><b>Kinder</b>Care</span>
                 </a>
             </div>
             <div class="sidebar-wrapper">
@@ -564,7 +564,7 @@
         {{-- Footer --}}
         <footer class="app-footer">
             <div class="float-end d-none d-sm-inline">AdminLTE 4</div>
-            <strong>&copy; {{ date('Y') }} Daycare System.</strong> All rights reserved.
+            <strong>&copy; {{ date('Y') }} KinderCare.</strong> All rights reserved.
         </footer>
     </div>
 

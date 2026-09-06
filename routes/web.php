@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\ActivityOccurrenceController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ChildDailyLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProgramController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ChildController;
 use App\Http\Controllers\EnrollmentController;
 use Illuminate\Support\Facades\Route;
@@ -29,7 +32,7 @@ Route::middleware('auth')->group(function () {
         return view('dashboard');
     })->name('dashboard');
 
-    // Daily Operations (Attendance & Child Daily Logs) - accessible by Admin & Staff
+    // Daily Operations (Attendance, Child Daily Logs, Activity Sessions) - accessible by Admin & Staff
     Route::middleware('role:admin|staff')->group(function () {
         // Attendance Desk
         Route::get('/admin/attendance', [AttendanceController::class, 'index'])->name('admin.attendance.index');
@@ -47,6 +50,22 @@ Route::middleware('auth')->group(function () {
         Route::post('/admin/child-daily-logs', [ChildDailyLogController::class, 'store'])->name('admin.child-daily-logs.store');
         Route::put('/admin/child-daily-logs/{childDailyLog}', [ChildDailyLogController::class, 'update'])->name('admin.child-daily-logs.update');
         Route::delete('/admin/child-daily-logs/{childDailyLog}', [ChildDailyLogController::class, 'destroy'])->name('admin.child-daily-logs.destroy');
+
+        // Activity Occurrences (Scheduling, Sessions, & Observations)
+        Route::get('/admin/activity-occurrences', [ActivityOccurrenceController::class, 'index'])->name('admin.activity-occurrences.index');
+        Route::get('/admin/activity-occurrences/create', [ActivityOccurrenceController::class, 'create'])->name('admin.activity-occurrences.create');
+        Route::post('/admin/activity-occurrences', [ActivityOccurrenceController::class, 'store'])->name('admin.activity-occurrences.store');
+        Route::get('/admin/activity-occurrences/{activityOccurrence}', [ActivityOccurrenceController::class, 'show'])->name('admin.activity-occurrences.show')->whereNumber('activityOccurrence');
+        Route::get('/admin/activity-occurrences/{activityOccurrence}/edit', [ActivityOccurrenceController::class, 'edit'])->name('admin.activity-occurrences.edit')->whereNumber('activityOccurrence');
+        Route::put('/admin/activity-occurrences/{activityOccurrence}', [ActivityOccurrenceController::class, 'update'])->name('admin.activity-occurrences.update')->whereNumber('activityOccurrence');
+        Route::patch('/admin/activity-occurrences/{activityOccurrence}/status', [ActivityOccurrenceController::class, 'updateStatus'])->name('admin.activity-occurrences.update-status')->whereNumber('activityOccurrence');
+        Route::post('/admin/activity-occurrences/{activityOccurrence}/media', [ActivityOccurrenceController::class, 'uploadMedia'])->name('admin.activity-occurrences.upload-media')->whereNumber('activityOccurrence');
+        Route::delete('/admin/activity-occurrences/media/{activityMedia}', [ActivityOccurrenceController::class, 'destroyMedia'])->name('admin.activity-occurrences.destroy-media')->whereNumber('activityMedia');
+        Route::delete('/admin/activity-occurrences/{activityOccurrence}', [ActivityOccurrenceController::class, 'destroy'])->name('admin.activity-occurrences.destroy')->whereNumber('activityOccurrence');
+
+        // Activities catalog index & view
+        Route::get('/admin/activities', [ActivityController::class, 'index'])->name('admin.activities.index');
+        Route::get('/admin/activities/{activity}', [ActivityController::class, 'show'])->name('admin.activities.show')->whereNumber('activity');
     });
 
     // Admin-only management routes
@@ -62,6 +81,14 @@ Route::middleware('auth')->group(function () {
 
         // Programs management
         Route::resource('/admin/programs', ProgramController::class, ['as' => 'admin']);
+
+        // Activity Catalog management (Admin only)
+        Route::get('/admin/activities/create', [ActivityController::class, 'create'])->name('admin.activities.create');
+        Route::post('/admin/activities', [ActivityController::class, 'store'])->name('admin.activities.store');
+        Route::get('/admin/activities/{activity}/edit', [ActivityController::class, 'edit'])->name('admin.activities.edit')->whereNumber('activity');
+        Route::put('/admin/activities/{activity}', [ActivityController::class, 'update'])->name('admin.activities.update')->whereNumber('activity');
+        Route::patch('/admin/activities/{activity}/toggle-status', [ActivityController::class, 'toggleStatus'])->name('admin.activities.toggle-status')->whereNumber('activity');
+        Route::delete('/admin/activities/{activity}', [ActivityController::class, 'destroy'])->name('admin.activities.destroy')->whereNumber('activity');
 
         // Children management
         Route::resource('/admin/children', ChildController::class, ['as' => 'admin']);
@@ -80,6 +107,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/admin/role-permissions', [RolePermissionController::class, 'store'])->name('admin.role-permissions.store');
         Route::put('/admin/role-permissions/{role}', [RolePermissionController::class, 'update'])->name('admin.role-permissions.update');
         Route::delete('/admin/role-permissions/{role}', [RolePermissionController::class, 'destroy'])->name('admin.role-permissions.destroy');
+
+        // Reports
+        Route::get('/admin/reports/activity-calendar', [ReportController::class, 'activityCalendar'])->name('admin.reports.activity-calendar');
     });
 });
-

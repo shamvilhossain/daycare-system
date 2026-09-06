@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Daycare System Dashboard — manage children, staff, and daily activities at a glance.">
-    <title>Dashboard | Daycare System</title>
+    <meta name="description" content="KinderCare Dashboard — manage children, staff, and daily activities at a glance.">
+    <title>Dashboard | KinderCare</title>
 
     <!-- Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -279,7 +279,7 @@
             <div class="sidebar-brand">
                 <a href="{{ route('dashboard') }}" class="brand-link">
                     <i class="bi bi-house-heart-fill brand-image" style="font-size:1.4rem;"></i>
-                    <span class="brand-text fw-light"><b>Daycare</b>System</span>
+                    <span class="brand-text fw-light"><b>Kinder</b>Care</span>
                 </a>
             </div>
             <div class="sidebar-wrapper">
@@ -306,6 +306,12 @@
                                 <p>Daily Child Logs</p>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.activity-occurrences.index') }}" class="nav-link">
+                                <i class="nav-icon bi bi-calendar-check"></i>
+                                <p>Daily Schedule & Log</p>
+                            </a>
+                        </li>
 
                         <li class="nav-header">MANAGEMENT</li>
                         <li class="nav-item">
@@ -321,13 +327,13 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="#" class="nav-link">
-                                <i class="nav-icon bi bi-calendar-event-fill"></i>
-                                <p>Activities</p>
+                            <a href="{{ route('admin.activities.index') }}" class="nav-link">
+                                <i class="nav-icon bi bi-palette-fill"></i>
+                                <p>Activity Catalog</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="#" class="nav-link">
+                            <a href="{{ route('admin.enrollments.index') }}" class="nav-link">
                                 <i class="nav-icon bi bi-clipboard-check-fill"></i>
                                 <p>Enrollments</p>
                             </a>
@@ -359,15 +365,21 @@
                                 <p>Role Permissions</p>
                             </a>
                         </li>
-                        @endrole
 
                         <li class="nav-header">REPORTS</li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.reports.activity-calendar') }}" class="nav-link">
+                                <i class="nav-icon bi bi-calendar3"></i>
+                                <p>Activity Calendar</p>
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a href="#" class="nav-link">
                                 <i class="nav-icon bi bi-bar-chart-line-fill"></i>
                                 <p>Analytics</p>
                             </a>
                         </li>
+                        @endrole
                         <li class="nav-item">
                             <a href="#" class="nav-link">
                                 <i class="nav-icon bi bi-gear-fill"></i>
@@ -505,7 +517,7 @@
                                     <div class="activity-item">
                                         <span class="activity-dot dot-amber"></span>
                                         <div>
-                                            <div style="font-size:0.875rem; color:#1e1b4b;">Welcome to Daycare System</div>
+                                            <div style="font-size:0.875rem; color:#1e1b4b;">Welcome to KinderCare</div>
                                             <div style="font-size:0.75rem; color:#9ca3af; margin-top:2px;">Your account role: {{ Auth::user()->role ?? 'User' }}</div>
                                         </div>
                                     </div>
@@ -552,7 +564,7 @@
         {{-- Footer --}}
         <footer class="app-footer">
             <div class="float-end d-none d-sm-inline">AdminLTE 4</div>
-            <strong>&copy; {{ date('Y') }} Daycare System.</strong> All rights reserved.
+            <strong>&copy; {{ date('Y') }} KinderCare.</strong> All rights reserved.
         </footer>
     </div>
 

@@ -6,7 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class ActivityMedia extends Model
 {
-    protected $table = 'activity_media';
+    protected $table   = 'activity_media';
+    protected $guarded = [];
 
-    public function activityOccurrence() { return $this->belongsTo(ActivityOccurrence::class); }
+    /* ------------------------------------------------------------------ */
+    /*  Relationships                                                        */
+    /* ------------------------------------------------------------------ */
+
+    public function activityOccurrence()
+    {
+        return $this->belongsTo(ActivityOccurrence::class);
+    }
 }

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Sign in to your Daycare System account to manage children, staff, and daily activities.">
-    <title>Sign In | Daycare System</title>
+    <meta name="description" content="Sign in to your KinderCare account to manage children, staff, and daily activities.">
+    <title>Sign In | KinderCare</title>
 
     <!-- Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -583,7 +583,7 @@
                     <div class="auth-logo-icon">
                         <i class="bi bi-house-heart-fill"></i>
                     </div>
-                    <span>Daycare<em>System</em></span>
+                    <span>Kinder<em>Care</em></span>
                 </div>
 
                 <h1 class="auth-heading">Sign In</h1>

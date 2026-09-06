@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Programs | Daycare System</title>
+    <title>Programs | KinderCare</title>
     <!-- Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,7 +46,7 @@
         <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
             <div class="sidebar-brand">
                 <a href="/" class="brand-link">
-                    <span class="brand-text font-weight-light">DaycareSystem</span>
+                    <span class="brand-text font-weight-light">KinderCare</span>
                 </a>
             </div>
             <div class="sidebar-wrapper">
@@ -62,7 +62,7 @@
                         <li class="nav-header">MANAGEMENT</li>
                         <li class="nav-item"><a href="{{ route('admin.children.index') }}" class="nav-link"><i class="nav-icon bi bi-people-fill"></i><p>Children</p></a></li>
                         <li class="nav-item"><a href="#" class="nav-link"><i class="nav-icon bi bi-person-badge-fill"></i><p>Staff</p></a></li>
-                        <li class="nav-item"><a href="#" class="nav-link"><i class="nav-icon bi bi-calendar-event-fill"></i><p>Activities</p></a></li>
+                        <li class="nav-item"><a href="{{ route('admin.activities.index') }}" class="nav-link"><i class="nav-icon bi bi-palette-fill"></i><p>Activities</p></a></li>
                         <li class="nav-item"><a href="{{ route('admin.enrollments.index') }}" class="nav-link"><i class="nav-icon bi bi-clipboard-check-fill"></i><p>Enrollments</p></a></li>
                         <li class="nav-item"><a href="#" class="nav-link"><i class="nav-icon bi bi-credit-card-2-front-fill"></i><p>Payments</p></a></li>
                         <li class="nav-header">ADMIN</li>

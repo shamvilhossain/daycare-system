@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Create a new user account, assign Spatie role, and build profile.">
-    <title>Create User | Daycare System</title>
+    <title>Create User | KinderCare</title>
 
     <!-- Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -178,7 +178,7 @@
             <div class="sidebar-brand">
                 <a href="{{ route('dashboard') }}" class="brand-link">
                     <i class="bi bi-house-heart-fill brand-image" style="font-size:1.4rem;"></i>
-                    <span class="brand-text fw-light"><b>Daycare</b>System</span>
+                    <span class="brand-text fw-light"><b>Kinder</b>Care</span>
                 </a>
             </div>
             <div class="sidebar-wrapper">
@@ -494,7 +494,7 @@
 
         {{-- Footer --}}
         <footer class="app-footer">
-            <div class="float-end d-none d-sm-inline">Daycare Management System</div>
+            <div class="float-end d-none d-sm-inline">KinderCare Management System</div>
             <strong>Copyright &copy; {{ date('Y') }}</strong> All rights reserved.
         </footer>
     </div>

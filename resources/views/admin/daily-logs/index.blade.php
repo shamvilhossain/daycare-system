@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Child Logs | Daycare System</title>
+    <title>Daily Child Logs | KinderCare</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -85,7 +85,7 @@
             <div class="sidebar-brand">
                 <a href="{{ route('dashboard') }}" class="brand-link">
                     <i class="bi bi-house-heart-fill brand-image" style="font-size:1.4rem;"></i>
-                    <span class="brand-text fw-light"><b>Daycare</b>System</span>
+                    <span class="brand-text fw-light"><b>Kinder</b>Care</span>
                 </a>
             </div>
             <div class="sidebar-wrapper">
