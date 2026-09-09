@@ -12,10 +12,20 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ChildController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\AnnouncementController;
+use App\Models\Announcement;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    $announcements = Announcement::whereIn('audience', ['parents', 'all'])
+        ->where('expires_at', '>', now())
+        ->where(function ($query) {
+            $query->whereNull('published_at')->orWhere('published_at', '<=', now());
+        })
+        ->orderByRaw('CASE WHEN published_at IS NULL THEN created_at ELSE published_at END DESC')
+        ->get();
+
+    return view('welcome', compact('announcements'));
 });
 
 Route::middleware('guest')->group(function () {
@@ -114,6 +124,9 @@ Route::middleware('auth')->group(function () {
         Route::resource('/admin/invoices', InvoiceController::class, ['as' => 'admin'])->except(['edit', 'update']);
         Route::post('/admin/invoices/{invoice}/payments', [InvoiceController::class, 'addPayment'])->name('admin.invoices.add-payment');
         Route::patch('/admin/invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('admin.invoices.cancel');
+
+        // Announcement management
+        Route::resource('/admin/announcements', AnnouncementController::class, ['as' => 'admin']);
 
         // Reports
         Route::get('/admin/reports/activity-calendar', [ReportController::class, 'activityCalendar'])->name('admin.reports.activity-calendar');

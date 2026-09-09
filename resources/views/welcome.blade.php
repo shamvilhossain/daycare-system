@@ -488,6 +488,162 @@
                 right: -10px;
             }
         }
+
+        /* Announcement Ticker Bar */
+        .announcement-ticker-wrapper {
+            margin-top: 76px;
+            background: linear-gradient(135deg, #fff5f5 0%, #f0fdfc 100%);
+            border-bottom: 1px solid rgba(255, 107, 107, 0.18);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            position: relative;
+            z-index: 1010;
+            padding: 0.65rem 0;
+        }
+
+        .announcement-ticker-inner {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            overflow: hidden;
+        }
+
+        .ticker-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #FF6B6B 0%, #ff8e8e 100%);
+            color: #ffffff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 0.35rem 0.95rem;
+            border-radius: 50px;
+            white-space: nowrap;
+            box-shadow: 0 3px 10px rgba(255, 107, 107, 0.35);
+            animation: ticker-pulse 2.2s infinite ease-in-out;
+            flex-shrink: 0;
+        }
+
+        @keyframes ticker-pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 3px 10px rgba(255, 107, 107, 0.35); }
+            50% { transform: scale(1.05); box-shadow: 0 5px 16px rgba(255, 107, 107, 0.55); }
+        }
+
+        .ticker-marquee-track {
+            flex-grow: 1;
+            overflow: hidden;
+            position: relative;
+            white-space: nowrap;
+            mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
+        }
+
+        .ticker-content {
+            display: inline-flex;
+            align-items: center;
+            gap: 2.5rem;
+            white-space: nowrap;
+            will-change: transform;
+            animation: marquee-scroll 32s linear infinite;
+        }
+
+        .ticker-content:hover,
+        .ticker-marquee-track:hover .ticker-content {
+            animation-play-state: paused;
+        }
+
+        @keyframes marquee-scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .ticker-item {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(78, 205, 196, 0.45);
+            border-radius: 50px;
+            padding: 0.35rem 1rem 0.35rem 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: #2D3436;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        .ticker-item:hover {
+            background: #ffffff;
+            border-color: #FF6B6B;
+            color: #FF6B6B;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 107, 107, 0.22);
+        }
+
+        .ticker-item-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ECDC4;
+            display: inline-block;
+        }
+
+        .ticker-item:hover .ticker-item-dot {
+            background: #FF6B6B;
+        }
+
+        .ticker-item-tag {
+            font-size: 0.72rem;
+            font-weight: 700;
+            background: #f0fdfc;
+            color: #0d9488;
+            border: 1px solid #ccfbf1;
+            padding: 0.15rem 0.5rem;
+            border-radius: 50px;
+        }
+
+        /* Announcement Modal Styling */
+        .announcement-modal .modal-content {
+            border-radius: 24px;
+            border: none;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.18);
+            overflow: hidden;
+        }
+
+        .announcement-modal-header {
+            background: linear-gradient(135deg, #fff5f5 0%, #f0fdfc 100%);
+            border-bottom: 1px solid rgba(255, 107, 107, 0.1);
+            padding: 1.75rem 2rem 1.25rem 2rem;
+        }
+
+        .announcement-modal-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #FF6B6B 0%, #ff8e8e 100%);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        .announcement-modal-body {
+            font-size: 1.05rem;
+            line-height: 1.75;
+            color: #374151;
+            white-space: pre-line;
+            padding: 1.75rem 2rem;
+            background: #ffffff;
+            border-left: 4px solid #4ECDC4;
+            margin: 1.5rem 2rem;
+            border-radius: 0 16px 16px 0;
+            background: #f8fafc;
+        }
     </style>
 </head>
 
@@ -524,6 +680,39 @@
             </div>
         </div>
     </nav>
+
+    @if(isset($announcements) && $announcements->isNotEmpty())
+        <!-- Announcement Ticker Bar -->
+        <div class="announcement-ticker-wrapper">
+            <div class="container-fluid px-lg-4">
+                <div class="announcement-ticker-inner">
+                    <div class="ticker-badge">
+                        <i class="bi bi-megaphone-fill"></i>
+                        <span>Notices</span>
+                    </div>
+                    <div class="ticker-marquee-track">
+                        <div class="ticker-content">
+                            {{-- Render items twice to ensure infinite, seamless scrolling loop --}}
+                            @for ($i = 0; $i < 2; $i++)
+                                @foreach($announcements as $ann)
+                                    <button type="button" class="ticker-item announcement-trigger"
+                                        data-title="{{ $ann->title }}"
+                                        data-content="{{ $ann->content }}"
+                                        data-published="{{ $ann->published_at ? $ann->published_at->format('M d, Y h:i A') : 'Recently' }}"
+                                        data-expires="{{ $ann->expires_at ? $ann->expires_at->format('M d, Y') : '' }}"
+                                        data-audience="{{ $ann->audience == 'all' ? 'All (Public)' : 'Parents' }}">
+                                        <span class="ticker-item-dot"></span>
+                                        <span class="ticker-item-title">{{ $ann->title }}</span>
+                                        <span class="ticker-item-tag">{{ $ann->published_at ? $ann->published_at->format('M d') : 'New' }}</span>
+                                    </button>
+                                @endforeach
+                            @endfor
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 
     <!-- Hero Section -->
     <section class="hero-section overflow-hidden">
@@ -725,7 +914,81 @@
         </div>
     </footer>
 
+    <!-- Announcement Detail Modal -->
+    <div class="modal fade announcement-modal" id="announcementModal" tabindex="-1" aria-labelledby="modalAnnouncementTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="announcement-modal-header d-flex justify-content-between align-items-start">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="announcement-modal-icon">
+                            <i class="bi bi-megaphone-fill"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1" id="modalAnnouncementAudience">
+                                    Audience
+                                </span>
+                                <span class="text-muted small" id="modalAnnouncementDate">
+                                    <i class="bi bi-calendar-event me-1"></i> Date
+                                </span>
+                            </div>
+                            <h4 class="modal-title fw-bold text-dark mb-0" id="modalAnnouncementTitle">
+                                Announcement Title
+                            </h4>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="announcement-modal-body" id="modalAnnouncementContent">
+                        Announcement details will be shown here...
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex justify-content-between align-items-center">
+                    <div class="text-muted small" id="modalAnnouncementExpiresWrapper">
+                        <i class="bi bi-clock-history me-1 text-warning"></i>
+                        <span id="modalAnnouncementExpires"></span>
+                    </div>
+                    <button type="button" class="btn btn-secondary px-4 rounded-pill" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const modalEl = document.getElementById('announcementModal');
+            if (!modalEl) return;
+
+            const modal = new bootstrap.Modal(modalEl);
+            const titleEl = document.getElementById('modalAnnouncementTitle');
+            const contentEl = document.getElementById('modalAnnouncementContent');
+            const dateEl = document.getElementById('modalAnnouncementDate');
+            const audienceEl = document.getElementById('modalAnnouncementAudience');
+            const expiresEl = document.getElementById('modalAnnouncementExpires');
+            const expiresWrapper = document.getElementById('modalAnnouncementExpiresWrapper');
+
+            document.querySelectorAll('.announcement-trigger').forEach(function (button) {
+                button.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    titleEl.textContent = this.dataset.title;
+                    contentEl.textContent = this.dataset.content;
+                    dateEl.innerHTML = '<i class="bi bi-calendar-event me-1"></i> Published: ' + this.dataset.published;
+                    audienceEl.textContent = this.dataset.audience;
+
+                    if (this.dataset.expires) {
+                        expiresEl.textContent = 'Valid until: ' + this.dataset.expires;
+                        expiresWrapper.classList.remove('d-none');
+                    } else {
+                        expiresWrapper.classList.add('d-none');
+                    }
+
+                    modal.show();
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

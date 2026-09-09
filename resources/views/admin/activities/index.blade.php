@@ -129,6 +129,18 @@
                                 <p>Enrollments</p>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.invoices.index') }}" class="nav-link">
+                                <i class="nav-icon bi bi-receipt-cutoff"></i>
+                                <p>Invoices & Payments</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.announcements.index') }}" class="nav-link">
+                                <i class="nav-icon bi bi-megaphone-fill"></i>
+                                <p>Announcements</p>
+                            </a>
+                        </li>
                         @role('admin')
                         <li class="nav-header">ADMIN</li>
                         <li class="nav-item">
