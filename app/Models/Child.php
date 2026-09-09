@@ -27,6 +27,7 @@ class Child extends Model
     public function attendances()    { return $this->hasMany(Attendance::class); }
     public function dailyLogs()      { return $this->hasMany(ChildDailyLog::class); }
     public function documents()      { return $this->hasMany(Document::class); }
+    public function invoices()       { return $this->hasMany(Invoice::class); }
 
     public function getFullNameAttribute(): string
     {

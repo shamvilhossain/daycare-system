@@ -12,8 +12,16 @@ class ParentProfile extends Model
     public function user(){ 
         return $this->belongsTo(User::class); 
     }
-    public function children(){ 
-        return $this->hasMany(Child::class, 'parent_id'); 
+    public function children()
+    {
+        return $this->belongsToMany(Child::class, 'parent_child', 'parent_id', 'child_id')
+                     ->withPivot('relationship', 'is_primary', 'can_pickup')
+                     ->withTimestamps();
+    }
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class, 'parent_id');
     }
 
     public function getFullNameAttribute(): string

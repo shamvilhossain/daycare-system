@@ -11,6 +11,7 @@ use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ChildController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\InvoiceController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -107,6 +108,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/admin/role-permissions', [RolePermissionController::class, 'store'])->name('admin.role-permissions.store');
         Route::put('/admin/role-permissions/{role}', [RolePermissionController::class, 'update'])->name('admin.role-permissions.update');
         Route::delete('/admin/role-permissions/{role}', [RolePermissionController::class, 'destroy'])->name('admin.role-permissions.destroy');
+
+        // Invoice & Payment management
+        Route::get('/admin/invoices/get-children', [InvoiceController::class, 'getChildrenByParent'])->name('admin.invoices.get-children');
+        Route::resource('/admin/invoices', InvoiceController::class, ['as' => 'admin'])->except(['edit', 'update']);
+        Route::post('/admin/invoices/{invoice}/payments', [InvoiceController::class, 'addPayment'])->name('admin.invoices.add-payment');
+        Route::patch('/admin/invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('admin.invoices.cancel');
 
         // Reports
         Route::get('/admin/reports/activity-calendar', [ReportController::class, 'activityCalendar'])->name('admin.reports.activity-calendar');
