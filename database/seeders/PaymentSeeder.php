@@ -12,6 +12,8 @@ class PaymentSeeder extends Seeder
         $payments = [
             [
                 'invoice_id' => 1,
+                'parent_id' => 1,
+                'child_id' => 1,
                 'payable_amount' => 500.00,
                 'paid_amount' => 500.00,
                 'payment_method' => 'cash',
@@ -20,6 +22,8 @@ class PaymentSeeder extends Seeder
             ],
             [
                 'invoice_id' => 2,
+                'parent_id' => 1,
+                'child_id' => 1,
                 'payable_amount' => 350.00,
                 'paid_amount' => 350.00,
                 'payment_method' => 'card',
@@ -28,6 +32,8 @@ class PaymentSeeder extends Seeder
             ],
             [
                 'invoice_id' => 3,
+                'parent_id' => 2,
+                'child_id' => 2,
                 'payable_amount' => 100.00,
                 'paid_amount' => 100.00,
                 'payment_method' => 'online',
@@ -36,6 +42,8 @@ class PaymentSeeder extends Seeder
             ],
             [
                 'invoice_id' => 5,
+                'parent_id' => 3,
+                'child_id' => 3,
                 'payable_amount' => 300.00,
                 'paid_amount' => 300.00,
                 'payment_method' => 'bank_transfer',

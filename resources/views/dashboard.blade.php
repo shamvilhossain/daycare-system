@@ -321,7 +321,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="#" class="nav-link">
+                            <a href="{{ route('admin.staff.index') }}" class="nav-link {{ request()->routeIs('admin.staff.*') ? 'active' : '' }}">
                                 <i class="nav-icon bi bi-person-badge-fill"></i>
                                 <p>Staff</p>
                             </a>

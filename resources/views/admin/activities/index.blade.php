@@ -118,6 +118,12 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a href="{{ route('admin.staff.index') }}" class="nav-link {{ request()->routeIs('admin.staff.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-person-badge-fill"></i>
+                                <p>Staff</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a href="{{ route('admin.activities.index') }}" class="nav-link active">
                                 <i class="nav-icon bi bi-palette-fill"></i>
                                 <p>Activity Catalog</p>

@@ -13,6 +13,7 @@ use App\Http\Controllers\ChildController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\StaffController;
 use App\Models\Announcement;
 use Illuminate\Support\Facades\Route;
 
@@ -89,6 +90,10 @@ Route::middleware('auth')->group(function () {
         Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
         Route::patch('/admin/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('admin.users.toggle-status');
         Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+
+        // Staff management
+        Route::patch('/admin/staff/{staff}/toggle-status', [StaffController::class, 'toggleStatus'])->name('admin.staff.toggle-status');
+        Route::resource('/admin/staff', StaffController::class, ['as' => 'admin']);
 
         // Programs management
         Route::resource('/admin/programs', ProgramController::class, ['as' => 'admin']);

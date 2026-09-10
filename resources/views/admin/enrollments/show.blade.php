@@ -50,7 +50,7 @@
                         <li class="nav-item"><a href="{{ route('dashboard') }}" class="nav-link"><i class="nav-icon bi bi-grid-1x2-fill"></i><p>Dashboard</p></a></li>
                         <li class="nav-header">MANAGEMENT</li>
                         <li class="nav-item"><a href="{{ route('admin.children.index') }}" class="nav-link"><i class="nav-icon bi bi-people-fill"></i><p>Children</p></a></li>
-                        <li class="nav-item"><a href="#" class="nav-link"><i class="nav-icon bi bi-person-badge-fill"></i><p>Staff</p></a></li>
+                        <li class="nav-item"><a href="{{ route('admin.staff.index') }}" class="nav-link {{ request()->routeIs('admin.staff.*') ? 'active' : '' }}"><i class="nav-icon bi bi-person-badge-fill"></i><p>Staff</p></a></li>
                         <li class="nav-item"><a href="#" class="nav-link"><i class="nav-icon bi bi-calendar-event-fill"></i><p>Activities</p></a></li>
                         <li class="nav-item"><a href="{{ route('admin.enrollments.index') }}" class="nav-link active"><i class="nav-icon bi bi-clipboard-check-fill"></i><p>Enrollments</p></a></li>
                         <li class="nav-item"><a href="{{ route('admin.invoices.index') }}" class="nav-link"><i class="nav-icon bi bi-receipt-cutoff"></i><p>Invoices & Payments</p></a></li>

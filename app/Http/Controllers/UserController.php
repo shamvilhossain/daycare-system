@@ -90,11 +90,13 @@ class UserController extends Controller
             'address'       => 'nullable|string|max:500',
 
             // Staff-specific fields
-            'staff_role'    => 'nullable|in:teacher,assistant,admin',
-            'nid'           => 'nullable|string|max:50',
-            'date_of_birth' => 'nullable|date',
-            'hire_date'     => 'nullable|date',
-            'note'          => 'nullable|string|max:500',
+            'staff_role'     => 'nullable|in:teacher,assistant,admin,therapist',
+            'department'     => 'nullable|in:daycare,therapy',
+            'specialization' => 'nullable|in:slt,aba,ot',
+            'nid'            => 'nullable|string|max:50',
+            'date_of_birth'  => 'nullable|date',
+            'hire_date'      => 'nullable|date',
+            'note'           => 'nullable|string|max:500',
 
             // Profile Image
             'image'         => 'nullable|image|max:2048',
@@ -131,15 +133,17 @@ class UserController extends Controller
                 ]);
             } elseif ($validated['role'] === 'staff') {
                 $user->staffProfile()->create([
-                    'first_name'    => trim($validated['first_name']),
-                    'last_name'     => trim($validated['last_name']),
-                    'role'          => $validated['staff_role'] ?? 'teacher',
-                    'nid'           => $validated['nid'] ?? null,
-                    'date_of_birth' => $validated['date_of_birth'] ?? null,
-                    'hire_date'     => $validated['hire_date'] ?? now()->toDateString(),
-                    'note'          => $validated['note'] ?? null,
-                    'is_active'     => true,
-                    'image'         => $imagePath,
+                    'first_name'     => trim($validated['first_name']),
+                    'last_name'      => trim($validated['last_name']),
+                    'role'           => $validated['staff_role'] ?? 'teacher',
+                    'department'     => $validated['department'] ?? 'daycare',
+                    'specialization' => ($validated['department'] ?? '') === 'therapy' ? ($validated['specialization'] ?? null) : null,
+                    'nid'            => $validated['nid'] ?? null,
+                    'date_of_birth'  => $validated['date_of_birth'] ?? null,
+                    'hire_date'      => $validated['hire_date'] ?? now()->toDateString(),
+                    'note'           => $validated['note'] ?? null,
+                    'is_active'      => true,
+                    'image'          => $imagePath,
                 ]);
             } elseif ($validated['role'] === 'admin') {
                 $user->staffProfile()->create([
@@ -194,11 +198,13 @@ class UserController extends Controller
             'address'       => 'nullable|string|max:500',
 
             // Staff-specific fields
-            'staff_role'    => 'nullable|in:teacher,assistant,admin',
-            'nid'           => 'nullable|string|max:50',
-            'date_of_birth' => 'nullable|date',
-            'hire_date'     => 'nullable|date',
-            'note'          => 'nullable|string|max:500',
+            'staff_role'     => 'nullable|in:teacher,assistant,admin,therapist',
+            'department'     => 'nullable|in:daycare,therapy',
+            'specialization' => 'nullable|in:slt,aba,ot',
+            'nid'            => 'nullable|string|max:50',
+            'date_of_birth'  => 'nullable|date',
+            'hire_date'      => 'nullable|date',
+            'note'           => 'nullable|string|max:500',
 
             // Profile Image
             'image'         => 'nullable|image|max:2048',
@@ -254,12 +260,14 @@ class UserController extends Controller
                 }
             } else { // staff or admin
                 $profileData = array_merge($profileData, [
-                    'role'          => $validated['role'] === 'admin' ? 'admin' : ($validated['staff_role'] ?? 'teacher'),
-                    'nid'           => $validated['nid'] ?? null,
-                    'date_of_birth' => $validated['date_of_birth'] ?? null,
-                    'hire_date'     => $validated['hire_date'] ?? null,
-                    'note'          => $validated['role'] === 'admin' ? ($validated['note'] ?? 'Administrator') : ($validated['note'] ?? null),
-                    'is_active'     => true,
+                    'role'           => $validated['role'] === 'admin' ? 'admin' : ($validated['staff_role'] ?? 'teacher'),
+                    'department'     => $validated['department'] ?? 'daycare',
+                    'specialization' => ($validated['department'] ?? '') === 'therapy' ? ($validated['specialization'] ?? null) : null,
+                    'nid'            => $validated['nid'] ?? null,
+                    'date_of_birth'  => $validated['date_of_birth'] ?? null,
+                    'hire_date'      => $validated['hire_date'] ?? null,
+                    'note'           => $validated['role'] === 'admin' ? ($validated['note'] ?? 'Administrator') : ($validated['note'] ?? null),
+                    'is_active'      => true,
                 ]);
 
                 // Delete parent profile if changing from parent to staff

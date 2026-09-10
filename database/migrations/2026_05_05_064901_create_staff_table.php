@@ -16,7 +16,9 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users');
             $table->string('first_name');
             $table->string('last_name');
-            $table->enum('role', ['teacher', 'assistant', 'admin']);
+            $table->enum('role', ['teacher', 'assistant', 'admin', 'therapist']);
+            $table->enum('department', ['daycare', 'therapy'])->default('daycare');
+            $table->enum('specialization', ['slt', 'aba', 'ot'])->nullable();
             $table->string('nid')->nullable();
             $table->date('date_of_birth')->nullable();
             $table->date('hire_date')->nullable();
