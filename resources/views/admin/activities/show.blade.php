@@ -36,28 +36,7 @@
         </nav>
 
         {{-- Sidebar --}}
-        <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
-            <div class="sidebar-brand"><a href="/" class="brand-link"><span class="brand-text font-weight-light">KinderCare</span></a></div>
-            <div class="sidebar-wrapper">
-                <nav class="mt-2">
-                    <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu">
-                        <li class="nav-header">MANAGEMENT</li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.activities.index') }}" class="nav-link active">
-                                <i class="nav-icon bi bi-palette-fill"></i>
-                                <p>Activity Catalog</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.activity-occurrences.index') }}" class="nav-link">
-                                <i class="nav-icon bi bi-calendar-check"></i>
-                                <p>Daily Schedule</p>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-        </aside>
+        @include('partials.sidebar')
 
         {{-- Main Content --}}
         <main class="app-main">

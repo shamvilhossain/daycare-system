@@ -174,55 +174,7 @@
         </nav>
 
         {{-- Sidebar --}}
-        <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
-            <div class="sidebar-brand">
-                <a href="{{ route('dashboard') }}" class="brand-link">
-                    <i class="bi bi-house-heart-fill brand-image" style="font-size:1.4rem;"></i>
-                    <span class="brand-text fw-light"><b>Kinder</b>Care</span>
-                </a>
-            </div>
-            <div class="sidebar-wrapper">
-                <nav class="mt-2">
-                    <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu">
-                        <li class="nav-header">MAIN</li>
-                        <li class="nav-item">
-                            <a href="{{ route('dashboard') }}" class="nav-link">
-                                <i class="nav-icon bi bi-grid-1x2-fill"></i>
-                                <p>Dashboard</p>
-                            </a>
-                        </li>
-                        <li class="nav-header">MANAGEMENT</li>
-                        <li class="nav-item"><a href="{{ route('admin.children.index') }}" class="nav-link"><i class="nav-icon bi bi-people-fill"></i><p>Children</p></a></li>
-                        <li class="nav-item"><a href="{{ route('admin.staff.index') }}" class="nav-link {{ request()->routeIs('admin.staff.*') ? 'active' : '' }}"><i class="nav-icon bi bi-person-badge-fill"></i><p>Staff</p></a></li>
-                        <li class="nav-item"><a href="#" class="nav-link"><i class="nav-icon bi bi-calendar-event-fill"></i><p>Activities</p></a></li>
-                        <li class="nav-item"><a href="{{ route('admin.enrollments.index') }}" class="nav-link"><i class="nav-icon bi bi-clipboard-check-fill"></i><p>Enrollments</p></a></li>
-                        <li class="nav-item"><a href="{{ route('admin.invoices.index') }}" class="nav-link"><i class="nav-icon bi bi-receipt-cutoff"></i><p>Invoices & Payments</p></a></li>
-                        <li class="nav-header">ADMIN</li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.programs.index') }}" class="nav-link">
-                                <i class="nav-icon bi bi-book-half"></i>
-                                <p>Programs</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.users.index') }}" class="nav-link active">
-                                <i class="nav-icon bi bi-person-lines-fill"></i>
-                                <p>Users & Accounts</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.role-permissions.index') }}" class="nav-link">
-                                <i class="nav-icon bi bi-shield-lock-fill"></i>
-                                <p>Role Permissions</p>
-                            </a>
-                        </li>
-                        <li class="nav-header">REPORTS</li>
-                        <li class="nav-item"><a href="#" class="nav-link"><i class="nav-icon bi bi-bar-chart-line-fill"></i><p>Analytics</p></a></li>
-                        <li class="nav-item"><a href="#" class="nav-link"><i class="nav-icon bi bi-gear-fill"></i><p>Settings</p></a></li>
-                    </ul>
-                </nav>
-            </div>
-        </aside>
+        @include('partials.sidebar')
 
         {{-- Main Content --}}
         <main class="app-main">

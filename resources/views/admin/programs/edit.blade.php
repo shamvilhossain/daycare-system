@@ -23,34 +23,7 @@
         </nav>
 
         {{-- Sidebar --}}
-        <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
-            <div class="sidebar-brand"><a href="/" class="brand-link"><span class="brand-text font-weight-light">KinderCare</span></a></div>
-            <div class="sidebar-wrapper">
-                <nav class="mt-2">
-                    <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu">
-                        <li class="nav-header">ADMIN</li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.programs.index') }}" class="nav-link active">
-                                <i class="nav-icon bi bi-book-half"></i>
-                                <p>Programs</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.users.index') }}" class="nav-link">
-                                <i class="nav-icon bi bi-person-lines-fill"></i>
-                                <p>Users & Accounts</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.role-permissions.index') }}" class="nav-link">
-                                <i class="nav-icon bi bi-shield-lock-fill"></i>
-                                <p>Role Permissions</p>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-        </aside>
+        @include('partials.sidebar')
 
         {{-- Main Content --}}
         <main class="app-main">
