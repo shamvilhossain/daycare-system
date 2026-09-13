@@ -19,15 +19,30 @@ class Child extends Model
     public function parents()
     {
         return $this->belongsToMany(ParentProfile::class, 'parent_child', 'child_id', 'parent_id')
-                    ->withPivot('relationship', 'is_primary', 'can_pickup')
-                    ->withTimestamps();
+            ->withPivot('relationship', 'is_primary', 'can_pickup')
+            ->withTimestamps();
     }
 
-    public function enrollments()    { return $this->hasMany(Enrollment::class); }
-    public function attendances()    { return $this->hasMany(Attendance::class); }
-    public function dailyLogs()      { return $this->hasMany(ChildDailyLog::class); }
-    public function documents()      { return $this->hasMany(Document::class); }
-    public function invoices()       { return $this->hasMany(Invoice::class); }
+    public function enrollments()
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
+    public function dailyLogs()
+    {
+        return $this->hasMany(ChildDailyLog::class);
+    }
+    public function documents()
+    {
+        return $this->hasMany(Document::class);
+    }
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
+    }
 
     public function getFullNameAttribute(): string
     {
@@ -61,5 +76,10 @@ class Child extends Model
             return $diff->y . ' yr' . ($diff->y > 1 ? 's' : '') . ($diff->m > 0 ? ' ' . $diff->m . ' mo' : '');
         }
         return $diff->m . ' month' . ($diff->m > 1 ? 's' : '');
+    }
+
+    public function therapySessions()
+    {
+        return $this->hasMany(TherapySession::class);
     }
 }

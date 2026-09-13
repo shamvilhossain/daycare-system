@@ -13,15 +13,27 @@ class Staff extends Model
     {
         return [
             'date_of_birth' => 'date',
-            'hire_date'     => 'date',
-            'is_active'     => 'boolean',
+            'hire_date' => 'date',
+            'is_active' => 'boolean',
         ];
     }
 
-    public function user()                { return $this->belongsTo(User::class); }
-    public function activityOccurrences() { return $this->hasMany(ActivityOccurrence::class); }
-    public function childDailyLogs()      { return $this->hasMany(ChildDailyLog::class); }
-    public function announcements()       { return $this->hasMany(Announcement::class); }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+    public function activityOccurrences()
+    {
+        return $this->hasMany(ActivityOccurrence::class);
+    }
+    public function childDailyLogs()
+    {
+        return $this->hasMany(ChildDailyLog::class);
+    }
+    public function announcements()
+    {
+        return $this->hasMany(Announcement::class);
+    }
 
     public function getFullNameAttribute(): string
     {
@@ -31,18 +43,18 @@ class Staff extends Model
     public function getInitialsAttribute(): string
     {
         $first = mb_substr($this->first_name ?? '', 0, 1);
-        $last  = mb_substr($this->last_name ?? '', 0, 1);
+        $last = mb_substr($this->last_name ?? '', 0, 1);
         return strtoupper("{$first}{$last}") ?: 'ST';
     }
 
     public function getRoleLabelAttribute(): string
     {
         return match ($this->role) {
-            'teacher'   => 'Teacher',
+            'teacher' => 'Teacher',
             'assistant' => 'Assistant',
             'therapist' => 'Therapist',
-            'admin'     => 'Admin',
-            default     => ucfirst($this->role ?? ''),
+            'admin' => 'Admin',
+            default => ucfirst($this->role ?? ''),
         };
     }
 
@@ -50,16 +62,16 @@ class Staff extends Model
     {
         return match ($this->department) {
             'therapy' => 'Therapy',
-            default   => 'Daycare',
+            default => 'Daycare',
         };
     }
 
     public function getSpecializationLabelAttribute(): ?string
     {
         return match ($this->specialization) {
-            'slt'   => 'Speech & Language Therapy (SLT)',
-            'aba'   => 'Applied Behavior Analysis (ABA)',
-            'ot'    => 'Occupational Therapy (OT)',
+            'slt' => 'Speech & Language Therapy (SLT)',
+            'aba' => 'Applied Behavior Analysis (ABA)',
+            'ot' => 'Occupational Therapy (OT)',
             default => null,
         };
     }
@@ -67,9 +79,9 @@ class Staff extends Model
     public function getSpecializationShortAttribute(): ?string
     {
         return match ($this->specialization) {
-            'slt'   => 'SLT',
-            'aba'   => 'ABA',
-            'ot'    => 'OT',
+            'slt' => 'SLT',
+            'aba' => 'ABA',
+            'ot' => 'OT',
             default => null,
         };
     }
@@ -90,12 +102,12 @@ class Staff extends Model
 
         return $query->where(function ($q) use ($term) {
             $q->where('first_name', 'like', "%{$term}%")
-              ->orWhere('last_name', 'like', "%{$term}%")
-              ->orWhere('nid', 'like', "%{$term}%")
-              ->orWhere('note', 'like', "%{$term}%")
-              ->orWhereHas('user', function ($uq) use ($term) {
-                  $uq->where('email', 'like', "%{$term}%");
-              });
+                ->orWhere('last_name', 'like', "%{$term}%")
+                ->orWhere('nid', 'like', "%{$term}%")
+                ->orWhere('note', 'like', "%{$term}%")
+                ->orWhereHas('user', function ($uq) use ($term) {
+                    $uq->where('email', 'like', "%{$term}%");
+                });
         });
     }
 
@@ -129,5 +141,10 @@ class Staff extends Model
             return $query->where('is_active', filter_var($isActive, FILTER_VALIDATE_BOOLEAN));
         }
         return $query;
+    }
+
+    public function therapySessions()
+    {
+        return $this->hasMany(TherapySession::class, 'staff_id');
     }
 }

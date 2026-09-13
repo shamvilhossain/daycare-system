@@ -14,6 +14,7 @@ use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\TherapySessionController;
 use App\Models\Announcement;
 use Illuminate\Support\Facades\Route;
 
@@ -132,6 +133,12 @@ Route::middleware('auth')->group(function () {
 
         // Announcement management
         Route::resource('/admin/announcements', AnnouncementController::class, ['as' => 'admin']);
+
+        // Therapy Sessions management
+        Route::resource('/admin/therapy-sessions', TherapySessionController::class, ['as' => 'admin'])
+            ->parameters(['therapy-sessions' => 'therapySession']);
+        Route::patch('/admin/therapy-sessions/{therapySession}/update-status', [TherapySessionController::class, 'updateStatus'])
+            ->name('admin.therapy-sessions.update-status');
 
         // Reports
         Route::get('/admin/reports/activity-calendar', [ReportController::class, 'activityCalendar'])->name('admin.reports.activity-calendar');

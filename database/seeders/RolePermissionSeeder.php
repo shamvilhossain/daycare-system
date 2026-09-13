@@ -62,6 +62,11 @@ class RolePermissionSeeder extends Seeder
             // Announcements
             'announcements.view-any', 'announcements.create',
 
+            // Therapy Sessions
+            'therapy-sessions.view-any', 'therapy-sessions.view',
+            'therapy-sessions.create', 'therapy-sessions.update',
+            'therapy-sessions.delete',
+
             // Reports & settings
             'reports.view',
             'settings.manage',
@@ -93,6 +98,7 @@ class RolePermissionSeeder extends Seeder
             'child-daily-logs.view-any', 'child-daily-logs.view',
             'child-daily-logs.create', 'child-daily-logs.update',
             'announcements.view-any',
+            'therapy-sessions.view-any', 'therapy-sessions.view',
         ]);
 
         // ── Parent: read-only, scoped to their own children ──────────
@@ -108,6 +114,7 @@ class RolePermissionSeeder extends Seeder
             'invoices.view-any', 'invoices.view',
             'payments.view-any',
             'announcements.view-any',
+            'therapy-sessions.view-any', 'therapy-sessions.view',
         ]);
     }
 }

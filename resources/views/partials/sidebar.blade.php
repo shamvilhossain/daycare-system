@@ -74,6 +74,12 @@
                         <p>Announcements</p>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.therapy-sessions.index') }}" class="nav-link {{ request()->routeIs('admin.therapy-sessions.*') ? 'active' : '' }}">
+                        <i class="nav-icon bi bi-heart-pulse-fill"></i>
+                        <p>Therapy Sessions</p>
+                    </a>
+                </li>
 
                 @role('admin')
                 <li class="nav-header">ADMIN</li>

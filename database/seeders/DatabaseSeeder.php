@@ -39,6 +39,9 @@ class DatabaseSeeder extends Seeder
             PaymentSeeder::class,
 
             AnnouncementSeeder::class,
+
+            TherapyServiceSeeder::class,
+            TherapySessionSeeder::class,
         ]);
     }
 }
