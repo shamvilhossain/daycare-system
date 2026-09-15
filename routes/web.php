@@ -142,6 +142,7 @@ Route::middleware('auth')->group(function () {
             ->name('admin.therapy-sessions.update-status');
 
         // Reports
+        Route::get('/admin/reports/billing-revenue', [ReportController::class, 'billingRevenue'])->name('admin.reports.billing-revenue');
         Route::get('/admin/reports/activity-calendar', [ReportController::class, 'activityCalendar'])->name('admin.reports.activity-calendar');
     });
 });

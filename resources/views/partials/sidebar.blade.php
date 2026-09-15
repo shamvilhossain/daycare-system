@@ -103,17 +103,28 @@
                 </li>
 
                 <li class="nav-header">REPORTS</li>
-                <li class="nav-item">
-                    <a href="{{ route('admin.reports.activity-calendar') }}" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-calendar3"></i>
-                        <p>Activity Calendar</p>
+                <li class="nav-item {{ request()->routeIs('admin.reports.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                        <i class="nav-icon bi bi-file-earmark-bar-graph-fill"></i>
+                        <p>
+                            Reports
+                            <i class="nav-arrow bi bi-chevron-right"></i>
+                        </p>
                     </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="nav-icon bi bi-bar-chart-line-fill"></i>
-                        <p>Analytics</p>
-                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('admin.reports.billing-revenue') }}" class="nav-link {{ request()->routeIs('admin.reports.billing-revenue') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-receipt"></i>
+                                <p>Billing / Revenue</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.reports.activity-calendar') }}" class="nav-link {{ request()->routeIs('admin.reports.activity-calendar') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-calendar3"></i>
+                                <p>Activity Calendar</p>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
                 @endrole
                 <li class="nav-item">

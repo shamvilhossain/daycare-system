@@ -69,6 +69,7 @@ class RolePermissionSeeder extends Seeder
 
             // Reports & settings
             'reports.view',
+            'reports.billing',
             'settings.manage',
         ];
 

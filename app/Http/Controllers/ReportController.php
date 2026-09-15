@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Activity;
 use App\Models\ActivityOccurrence;
+use App\Models\Invoice;
 use App\Models\Program;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -174,5 +175,156 @@ class ReportController extends Controller
             'activityId',
             'status'
         ));
+    }
+
+    /**
+     * Billing / Revenue report: What's invoiced vs collected.
+     */
+    public function billingRevenue(Request $request)
+    {
+        $query = Invoice::with(['parent', 'child', 'items', 'payments']);
+
+        // Search by parent name, child name, or invoice number
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('invoice_number', 'like', "%{$search}%")
+                  ->orWhereHas('parent', function ($pq) use ($search) {
+                      $pq->where('first_name', 'like', "%{$search}%")
+                         ->orWhere('last_name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('child', function ($cq) use ($search) {
+                      $cq->where('first_name', 'like', "%{$search}%")
+                         ->orWhere('last_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Filter by Date Range (invoice_date)
+        $fromDate = $request->input('from_date');
+        $toDate = $request->input('to_date');
+
+        if ($fromDate) {
+            $query->whereDate('invoice_date', '>=', $fromDate);
+        }
+        if ($toDate) {
+            $query->whereDate('invoice_date', '<=', $toDate);
+        }
+
+        // Filter by Status
+        $status = $request->input('status');
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        // Filter by Type (daycare / therapy / mixed)
+        $type = $request->input('type');
+        if ($type === 'therapy') {
+            $query->whereHas('items', fn($q) => $q->whereNotNull('therapy_session_id'))
+                  ->whereDoesntHave('items', fn($q) => $q->whereNull('therapy_session_id'));
+        } elseif ($type === 'daycare') {
+            $query->whereDoesntHave('items', fn($q) => $q->whereNotNull('therapy_session_id'));
+        } elseif ($type === 'mixed') {
+            $query->whereHas('items', fn($q) => $q->whereNotNull('therapy_session_id'))
+                  ->whereHas('items', fn($q) => $q->whereNull('therapy_session_id'));
+        }
+
+        // Export to CSV if requested
+        if ($request->query('export') === 'csv') {
+            return $this->exportBillingRevenueCsv($query);
+        }
+
+        // Calculate summary row metrics across the entire filtered dataset
+        $summaryInvoices = (clone $query)->get();
+        $nonCancelledInvoices = $summaryInvoices->where('status', '!=', 'cancelled');
+
+        $totalInvoiced = (float) $nonCancelledInvoices->sum('total_amount');
+        $totalCollected = (float) $summaryInvoices->sum(function ($inv) {
+            return (float) $inv->payments->sum('paid_amount');
+        });
+        $totalOutstanding = max(0, $totalInvoiced - $totalCollected);
+        $collectionRate = $totalInvoiced > 0 ? round(($totalCollected / $totalInvoiced) * 100, 1) : 0.0;
+
+        $summary = [
+            'total_invoiced'    => $totalInvoiced,
+            'total_collected'   => $totalCollected,
+            'total_outstanding' => $totalOutstanding,
+            'collection_rate'   => $collectionRate,
+            'total_count'       => $summaryInvoices->count(),
+            'paid_count'        => $summaryInvoices->where('status', 'paid')->count(),
+            'overdue_count'     => $summaryInvoices->where('status', 'overdue')->count(),
+            'draft_count'       => $summaryInvoices->where('status', 'draft')->count(),
+            'cancelled_count'   => $summaryInvoices->where('status', 'cancelled')->count(),
+        ];
+
+        $invoices = $query->orderBy('invoice_date', 'desc')
+            ->orderBy('id', 'desc')
+            ->paginate(20)
+            ->appends($request->query());
+
+        return view('admin.reports.billing-revenue', compact(
+            'invoices',
+            'summary',
+            'fromDate',
+            'toDate',
+            'type',
+            'status'
+        ));
+    }
+
+    /**
+     * Export billing / revenue report to CSV.
+     */
+    protected function exportBillingRevenueCsv($query)
+    {
+        $invoices = (clone $query)->orderBy('invoice_date', 'desc')->get();
+        $filename = 'billing-revenue-report-' . now()->format('Y-m-d_His') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Pragma'              => 'no-cache',
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires'             => '0',
+        ];
+
+        $callback = function () use ($invoices) {
+            $output = fopen('php://output', 'w');
+            // UTF-8 BOM for Excel compatibility
+            fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // Header row
+            fputcsv($output, [
+                'Invoice #',
+                'Family',
+                'Child',
+                'Type',
+                'Invoice Date',
+                'Due Date',
+                'Amount',
+                'Paid Total',
+                'Status',
+                'Paid Date',
+            ]);
+
+            foreach ($invoices as $invoice) {
+                $paidDate = $invoice->paid_date ? $invoice->paid_date->format('Y-m-d') : '';
+                fputcsv($output, [
+                    $invoice->invoice_number,
+                    $invoice->parent->full_name ?? '—',
+                    $invoice->child->full_name ?? '—',
+                    $invoice->invoice_type_label,
+                    $invoice->invoice_date->format('Y-m-d'),
+                    $invoice->due_date->format('Y-m-d'),
+                    number_format($invoice->total_amount, 2, '.', ''),
+                    number_format($invoice->paid_total, 2, '.', ''),
+                    $invoice->status_label,
+                    $paidDate,
+                ]);
+            }
+
+            fclose($output);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }
