@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class TherapySession extends Model
 {
     protected $guarded = [];
+
+    protected $casts = [
+        'session_date' => 'date',
+    ];
+
     public function child()
     {
         return $this->belongsTo(Child::class);
@@ -22,5 +27,14 @@ class TherapySession extends Model
     public function bookedBy()
     {
         return $this->belongsTo(User::class, 'booked_by');
+    }
+
+    /**
+     * The invoice line item this session was billed on (if any).
+     * A session can only be billed once — used for dedup via whereDoesntHave('invoiceItem').
+     */
+    public function invoiceItem()
+    {
+        return $this->hasOne(InvoiceItem::class);
     }
 }

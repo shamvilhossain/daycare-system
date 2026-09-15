@@ -127,6 +127,7 @@ Route::middleware('auth')->group(function () {
 
         // Invoice & Payment management
         Route::get('/admin/invoices/get-children', [InvoiceController::class, 'getChildrenByParent'])->name('admin.invoices.get-children');
+        Route::get('/admin/invoices/get-therapy-sessions', [InvoiceController::class, 'getBillableTherapySessions'])->name('admin.invoices.get-therapy-sessions');
         Route::resource('/admin/invoices', InvoiceController::class, ['as' => 'admin'])->except(['edit', 'update']);
         Route::post('/admin/invoices/{invoice}/payments', [InvoiceController::class, 'addPayment'])->name('admin.invoices.add-payment');
         Route::patch('/admin/invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('admin.invoices.cancel');

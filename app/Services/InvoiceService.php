@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Invoice;
+use App\Models\TherapySession;
 use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -33,14 +34,14 @@ class InvoiceService
     }
 
     /**
-     * Create an invoice with line items.
+     * Create an invoice with line items and optionally attach therapy sessions.
      */
     public function createInvoice(array $data, User $user): Invoice
     {
         return DB::transaction(function () use ($data, $user) {
             $totalAmount = 0;
 
-            // Calculate total from items
+            // Calculate total from manual items
             if (!empty($data['items'])) {
                 foreach ($data['items'] as $item) {
                     $totalAmount += (float) $item['amount'];
@@ -57,18 +58,71 @@ class InvoiceService
                 'status'         => 'draft',
             ]);
 
-            // Create line items
+            // Create manual line items (daycare tuition, fees, etc.)
             if (!empty($data['items'])) {
                 foreach ($data['items'] as $item) {
                     $invoice->items()->create([
                         'description' => $item['description'],
+                        'quantity'    => 1,
+                        'unit_price'  => $item['amount'],
                         'amount'      => $item['amount'],
                     ]);
                 }
             }
 
+            // Optionally attach completed therapy sessions
+            if (!empty($data['therapy_session_ids'])) {
+                $this->attachTherapySessions($invoice, $data['therapy_session_ids']);
+            }
+
             return $invoice;
         });
+    }
+
+    /**
+     * Attach completed, unbilled therapy sessions to an invoice.
+     *
+     * For each session:
+     * - Only bills sessions with status = 'completed'
+     * - Skips sessions already billed (whereDoesntHave('invoiceItem') dedup guard)
+     * - Snapshots therapy_services.session_rate into invoice_items.unit_price
+     *   so past invoices reflect what was actually charged, not current rates
+     */
+    public function attachTherapySessions(Invoice $invoice, array $sessionIds): void
+    {
+        $sessions = TherapySession::with('service')
+            ->whereIn('id', $sessionIds)
+            ->where('status', 'completed')
+            ->whereDoesntHave('invoiceItem') // dedup — skip already-billed sessions
+            ->get();
+
+        $addedTotal = 0;
+
+        foreach ($sessions as $session) {
+            $rate = $session->service->session_rate;
+            $therapyType = strtoupper($session->service->therapy_type);
+            $serviceName = $session->service->name;
+            $sessionDate = $session->session_date->format('M d, Y');
+
+            $description = "{$serviceName} ({$therapyType}) — {$sessionDate}";
+
+            $invoice->items()->create([
+                'therapy_session_id' => $session->id,
+                'description'        => $description,
+                'quantity'           => 1,
+                'unit_price'         => $rate,  // price snapshot
+                'amount'             => $rate,
+            ]);
+
+            $addedTotal += $rate;
+        }
+
+        // Recalculate total_amount
+        if ($addedTotal > 0) {
+            $invoice->update([
+                'total_amount' => $invoice->total_amount + $addedTotal,
+            ]);
+        }
     }
 
     /**

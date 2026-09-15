@@ -30,6 +30,43 @@
             font-size: 1.6rem; font-weight: 800; color: #065f46;
             font-family: 'Inter', monospace;
         }
+        .therapy-session-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .therapy-session-item:hover {
+            border-color: #6366f1;
+            background-color: #f5f3ff;
+        }
+        .therapy-session-item.selected {
+            border-color: #6366f1;
+            background-color: #eef2ff;
+            box-shadow: 0 0 0 2px rgba(99,102,241,0.15);
+        }
+        .therapy-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.5px; padding: 2px 8px; border-radius: 6px;
+        }
+        .therapy-badge.slt { background: #dbeafe; color: #1e40af; }
+        .therapy-badge.aba { background: #fce7f3; color: #9d174d; }
+        .therapy-badge.ot  { background: #d1fae5; color: #065f46; }
+        .therapy-toggle-wrapper {
+            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+            border: 1px solid #c7d2fe;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+        }
+        .sessions-loading {
+            text-align: center; padding: 2rem; color: #94a3b8;
+        }
+        .no-sessions-msg {
+            text-align: center; padding: 2rem; color: #94a3b8;
+        }
     </style>
 </head>
 <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
@@ -140,13 +177,41 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                {{-- Therapy Sessions Section --}}
+                                <div class="card border-0 shadow-sm mt-4" id="therapyCard" style="display:none;">
+                                    <div class="card-header bg-white">
+                                        <div class="therapy-toggle-wrapper d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-0 fw-bold text-indigo-700">
+                                                    <i class="bi bi-heart-pulse me-2"></i>Include Therapy Sessions
+                                                </h6>
+                                                <small class="text-muted">Optionally bill completed therapy sessions on this invoice</small>
+                                            </div>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="includeTherapyToggle" style="width:3rem;height:1.5rem;cursor:pointer;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body" id="therapySessionsBody" style="display:none;">
+                                        <div class="sessions-loading" id="therapyLoading" style="display:none;">
+                                            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                                            Loading billable sessions...
+                                        </div>
+                                        <div id="therapySessionsList"></div>
+                                        <div class="no-sessions-msg" id="noSessionsMsg" style="display:none;">
+                                            <i class="bi bi-check-circle fs-3 d-block mb-2 opacity-25"></i>
+                                            No unbilled completed sessions found for this child.
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             {{-- Right Column: Line Items --}}
                             <div class="col-lg-7">
                                 <div class="card border-0 shadow-sm">
                                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                                        <h5 class="mb-0"><i class="bi bi-list-check text-success me-2"></i>Line Items</h5>
+                                        <h5 class="mb-0"><i class="bi bi-list-check text-success me-2"></i>Line Items <small class="text-muted fw-normal">(Daycare, Fees, etc.)</small></h5>
                                         <button type="button" class="btn btn-sm btn-success" id="addItemBtn">
                                             <i class="bi bi-plus-lg me-1"></i>Add Item
                                         </button>
@@ -162,21 +227,12 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody id="itemsBody">
-                                                    <tr class="item-row">
-                                                        <td class="ps-3">
-                                                            <input type="text" name="items[0][description]" class="form-control" placeholder="e.g., Monthly Tuition" required>
-                                                        </td>
-                                                        <td>
-                                                            <input type="number" name="items[0][amount]" class="form-control item-amount" placeholder="0.00" step="0.01" min="0.01" required>
-                                                        </td>
-                                                        <td class="text-center">
-                                                            <button type="button" class="btn btn-sm btn-outline-danger remove-item-btn" disabled title="At least one item required">
-                                                                <i class="bi bi-trash"></i>
-                                                            </button>
-                                                        </td>
-                                                    </tr>
+                                                    {{-- Manual items start empty — admin adds as needed --}}
                                                 </tbody>
                                             </table>
+                                        </div>
+                                        <div class="text-center py-3" id="noManualItemsMsg">
+                                            <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Click "Add Item" to add daycare charges, or toggle therapy sessions on the left.</small>
                                         </div>
                                     </div>
                                     <div class="card-footer bg-white d-flex justify-content-between align-items-center">
@@ -209,13 +265,30 @@
         const itemsBody = document.getElementById('itemsBody');
         const addItemBtn = document.getElementById('addItemBtn');
         const invoiceTotal = document.getElementById('invoiceTotal');
+        const therapyCard = document.getElementById('therapyCard');
+        const therapyToggle = document.getElementById('includeTherapyToggle');
+        const therapySessionsBody = document.getElementById('therapySessionsBody');
+        const therapyLoading = document.getElementById('therapyLoading');
+        const therapySessionsList = document.getElementById('therapySessionsList');
+        const noSessionsMsg = document.getElementById('noSessionsMsg');
+        const noManualItemsMsg = document.getElementById('noManualItemsMsg');
 
-        let itemIndex = 1;
+        let itemIndex = 0;
+        let therapySessionsData = [];
+        let selectedSessionIds = new Set();
 
         // Load children when parent changes
         parentSelect.addEventListener('change', function () {
             const parentId = this.value;
             childSelect.innerHTML = '<option value="">— Loading... —</option>';
+
+            // Reset therapy section
+            therapyCard.style.display = 'none';
+            therapyToggle.checked = false;
+            therapySessionsBody.style.display = 'none';
+            therapySessionsList.innerHTML = '';
+            selectedSessionIds.clear();
+            recalcTotal();
 
             if (!parentId) {
                 childSelect.innerHTML = '<option value="">— Select parent first —</option>';
@@ -246,13 +319,170 @@
             });
         });
 
-        // Add line item
+        // When child changes, show therapy card and reset
+        childSelect.addEventListener('change', function () {
+            const childId = this.value;
+
+            // Reset therapy state
+            therapyToggle.checked = false;
+            therapySessionsBody.style.display = 'none';
+            therapySessionsList.innerHTML = '';
+            selectedSessionIds.clear();
+            therapySessionsData = [];
+            recalcTotal();
+
+            if (childId) {
+                therapyCard.style.display = 'block';
+            } else {
+                therapyCard.style.display = 'none';
+            }
+        });
+
+        // Therapy toggle
+        therapyToggle.addEventListener('change', function () {
+            if (this.checked) {
+                therapySessionsBody.style.display = 'block';
+                loadTherapySessions();
+            } else {
+                therapySessionsBody.style.display = 'none';
+                // Clear selections when toggling off
+                selectedSessionIds.clear();
+                removeTherapyHiddenInputs();
+                recalcTotal();
+            }
+        });
+
+        // Load billable therapy sessions via AJAX
+        function loadTherapySessions() {
+            const childId = childSelect.value;
+            if (!childId) return;
+
+            therapyLoading.style.display = 'block';
+            noSessionsMsg.style.display = 'none';
+            therapySessionsList.innerHTML = '';
+
+            fetch(`{{ route('admin.invoices.get-therapy-sessions') }}?child_id=${childId}`, {
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                }
+            })
+            .then(r => r.json())
+            .then(sessions => {
+                therapyLoading.style.display = 'none';
+                therapySessionsData = sessions;
+
+                if (sessions.length === 0) {
+                    noSessionsMsg.style.display = 'block';
+                    return;
+                }
+
+                sessions.forEach(session => {
+                    const typeClass = session.therapy_type.toLowerCase();
+                    const div = document.createElement('div');
+                    div.className = 'therapy-session-item d-flex align-items-center';
+                    div.dataset.sessionId = session.id;
+                    div.dataset.rate = session.raw_rate;
+                    div.innerHTML = `
+                        <div class="form-check me-3">
+                            <input class="form-check-input therapy-session-checkbox" type="checkbox"
+                                   value="${session.id}" id="therapy_${session.id}" style="width:1.2rem;height:1.2rem;cursor:pointer;">
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="fw-semibold">${session.service_name}</span>
+                                <span class="therapy-badge ${typeClass}">${session.therapy_type}</span>
+                            </div>
+                            <small class="text-muted">
+                                <i class="bi bi-calendar3 me-1"></i>${session.session_date}
+                                <span class="mx-1">·</span>
+                                <i class="bi bi-person me-1"></i>${session.therapist}
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <span class="fw-bold text-dark">৳${session.session_rate}</span>
+                        </div>
+                    `;
+
+                    // Click anywhere on the card to toggle
+                    div.addEventListener('click', function (e) {
+                        if (e.target.closest('.form-check-input')) return; // let checkbox handle itself
+                        const cb = this.querySelector('.therapy-session-checkbox');
+                        cb.checked = !cb.checked;
+                        cb.dispatchEvent(new Event('change'));
+                    });
+
+                    const checkbox = div.querySelector('.therapy-session-checkbox');
+                    checkbox.addEventListener('change', function () {
+                        if (this.checked) {
+                            selectedSessionIds.add(session.id);
+                            div.classList.add('selected');
+                        } else {
+                            selectedSessionIds.delete(session.id);
+                            div.classList.remove('selected');
+                        }
+                        updateTherapyHiddenInputs();
+                        recalcTotal();
+                    });
+
+                    therapySessionsList.appendChild(div);
+                });
+
+                // Add "Select All" button
+                if (sessions.length > 1) {
+                    const selectAllDiv = document.createElement('div');
+                    selectAllDiv.className = 'text-end mt-2';
+                    selectAllDiv.innerHTML = `
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllTherapyBtn">
+                            <i class="bi bi-check-all me-1"></i>Select All
+                        </button>
+                    `;
+                    therapySessionsList.prepend(selectAllDiv);
+
+                    document.getElementById('selectAllTherapyBtn').addEventListener('click', function () {
+                        const allChecked = selectedSessionIds.size === sessions.length;
+                        document.querySelectorAll('.therapy-session-checkbox').forEach(cb => {
+                            cb.checked = !allChecked;
+                            cb.dispatchEvent(new Event('change'));
+                        });
+                        this.innerHTML = allChecked
+                            ? '<i class="bi bi-check-all me-1"></i>Select All'
+                            : '<i class="bi bi-x-lg me-1"></i>Deselect All';
+                    });
+                }
+            })
+            .catch(() => {
+                therapyLoading.style.display = 'none';
+                noSessionsMsg.style.display = 'block';
+                noSessionsMsg.innerHTML = '<i class="bi bi-exclamation-triangle fs-3 d-block mb-2 text-warning opacity-50"></i>Failed to load therapy sessions.';
+            });
+        }
+
+        // Manage hidden inputs for selected therapy session IDs
+        function updateTherapyHiddenInputs() {
+            removeTherapyHiddenInputs();
+            selectedSessionIds.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'therapy_session_ids[]';
+                input.value = id;
+                input.className = 'therapy-hidden-input';
+                document.getElementById('invoiceForm').appendChild(input);
+            });
+        }
+
+        function removeTherapyHiddenInputs() {
+            document.querySelectorAll('.therapy-hidden-input').forEach(el => el.remove());
+        }
+
+        // Add manual line item
         addItemBtn.addEventListener('click', function () {
+            noManualItemsMsg.style.display = 'none';
             const row = document.createElement('tr');
             row.classList.add('item-row');
             row.innerHTML = `
                 <td class="ps-3">
-                    <input type="text" name="items[${itemIndex}][description]" class="form-control" placeholder="e.g., Late Pickup Fee" required>
+                    <input type="text" name="items[${itemIndex}][description]" class="form-control" placeholder="e.g., Monthly Tuition" required>
                 </td>
                 <td>
                     <input type="number" name="items[${itemIndex}][amount]" class="form-control item-amount" placeholder="0.00" step="0.01" min="0.01" required>
@@ -265,17 +495,19 @@
             `;
             itemsBody.appendChild(row);
             itemIndex++;
-            updateRemoveButtons();
             row.querySelector('.item-amount').addEventListener('input', recalcTotal);
         });
 
         // Remove line item (delegated)
         itemsBody.addEventListener('click', function (e) {
             const btn = e.target.closest('.remove-item-btn');
-            if (btn && !btn.disabled) {
+            if (btn) {
                 btn.closest('tr').remove();
-                updateRemoveButtons();
                 recalcTotal();
+                // Show helper msg if no manual items
+                if (itemsBody.querySelectorAll('.item-row').length === 0) {
+                    noManualItemsMsg.style.display = 'block';
+                }
             }
         });
 
@@ -288,19 +520,21 @@
 
         function recalcTotal() {
             let total = 0;
+
+            // Sum manual items
             document.querySelectorAll('.item-amount').forEach(input => {
                 total += parseFloat(input.value) || 0;
             });
-            invoiceTotal.textContent = '৳' + total.toFixed(2);
-        }
 
-        function updateRemoveButtons() {
-            const rows = itemsBody.querySelectorAll('.item-row');
-            rows.forEach(row => {
-                const btn = row.querySelector('.remove-item-btn');
-                btn.disabled = rows.length <= 1;
-                btn.title = rows.length <= 1 ? 'At least one item required' : 'Remove item';
+            // Sum selected therapy sessions
+            selectedSessionIds.forEach(id => {
+                const session = therapySessionsData.find(s => s.id === id);
+                if (session) {
+                    total += session.raw_rate;
+                }
             });
+
+            invoiceTotal.textContent = '৳' + total.toFixed(2);
         }
 
         // Trigger parent change if old value is set (validation failure)

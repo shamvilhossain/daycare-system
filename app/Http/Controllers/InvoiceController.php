@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Invoice;
 use App\Models\Child;
+use App\Models\TherapySession;
 use App\Models\ParentProfile;
 use App\Services\InvoiceService;
 use Illuminate\Http\Request;
@@ -81,14 +82,21 @@ class InvoiceController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'parent_id'            => 'required|exists:parents,id',
-            'child_id'             => 'required|exists:children,id',
-            'invoice_date'         => 'required|date',
-            'due_date'             => 'required|date|after_or_equal:invoice_date',
-            'items'                => 'required|array|min:1',
-            'items.*.description'  => 'required|string|max:255',
-            'items.*.amount'       => 'required|numeric|min:0.01',
+            'parent_id'              => 'required|exists:parents,id',
+            'child_id'               => 'required|exists:children,id',
+            'invoice_date'           => 'required|date',
+            'due_date'               => 'required|date|after_or_equal:invoice_date',
+            'items'                  => 'nullable|array',
+            'items.*.description'    => 'required_with:items|string|max:255',
+            'items.*.amount'         => 'required_with:items|numeric|min:0.01',
+            'therapy_session_ids'    => 'nullable|array',
+            'therapy_session_ids.*'  => 'exists:therapy_sessions,id',
         ]);
+
+        // At least one of manual items or therapy sessions must be present
+        if (empty($validated['items']) && empty($validated['therapy_session_ids'])) {
+            return back()->withErrors(['items' => 'Please add at least one line item or select therapy sessions to bill.'])->withInput();
+        }
 
         $invoice = $this->invoiceService->createInvoice($validated, $request->user());
 
@@ -156,5 +164,38 @@ class InvoiceController extends Controller
         $children = $parent->children()->select('children.id', 'children.first_name', 'children.last_name')->get();
 
         return response()->json($children);
+    }
+
+    /**
+     * API: Get billable therapy sessions for a child.
+     *
+     * Returns completed sessions that have NOT been billed yet
+     * (whereDoesntHave('invoiceItem') dedup guard).
+     */
+    public function getBillableTherapySessions(Request $request)
+    {
+        $request->validate([
+            'child_id' => 'required|exists:children,id',
+        ]);
+
+        $sessions = TherapySession::with(['service', 'therapist'])
+            ->where('child_id', $request->child_id)
+            ->where('status', 'completed')
+            ->whereDoesntHave('invoiceItem') // skip already-billed sessions
+            ->orderBy('session_date', 'desc')
+            ->get()
+            ->map(function ($session) {
+                return [
+                    'id'            => $session->id,
+                    'session_date'  => $session->session_date->format('M d, Y'),
+                    'service_name'  => $session->service->name,
+                    'therapy_type'  => strtoupper($session->service->therapy_type),
+                    'therapist'     => $session->therapist->first_name . ' ' . $session->therapist->last_name,
+                    'session_rate'  => number_format($session->service->session_rate, 2),
+                    'raw_rate'      => (float) $session->service->session_rate,
+                ];
+            });
+
+        return response()->json($sessions);
     }
 }

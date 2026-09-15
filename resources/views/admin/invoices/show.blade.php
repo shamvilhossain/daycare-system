@@ -217,6 +217,8 @@
                                         <tr>
                                             <th class="ps-3">#</th>
                                             <th>Description</th>
+                                            <th class="text-end">Unit Price</th>
+                                            <th class="text-center">Qty</th>
                                             <th class="text-end pe-3">Amount</th>
                                         </tr>
                                     </thead>
@@ -224,14 +226,23 @@
                                         @foreach($invoice->items as $i => $item)
                                             <tr>
                                                 <td class="ps-3 text-muted">{{ $i + 1 }}</td>
-                                                <td class="fw-medium">{{ $item->description }}</td>
+                                                <td class="fw-medium">
+                                                    {{ $item->description }}
+                                                    @if($item->therapy_session_id)
+                                                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle ms-1" style="font-size:0.65rem;vertical-align:middle;">
+                                                            <i class="bi bi-heart-pulse me-1"></i>Therapy
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                                <td class="text-end">৳{{ number_format($item->unit_price, 2) }}</td>
+                                                <td class="text-center">{{ $item->quantity }}</td>
                                                 <td class="text-end pe-3 fw-semibold">৳{{ number_format($item->amount, 2) }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>
                                     <tfoot class="bg-light">
                                         <tr>
-                                            <td colspan="2" class="ps-3 fw-bold text-end">Total</td>
+                                            <td colspan="4" class="ps-3 fw-bold text-end">Total</td>
                                             <td class="text-end pe-3 fw-bold fs-5 text-dark">৳{{ number_format($invoice->total_amount, 2) }}</td>
                                         </tr>
                                     </tfoot>
