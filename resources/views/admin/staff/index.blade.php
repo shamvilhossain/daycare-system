@@ -20,25 +20,25 @@
         /* Page Banner */
         .page-banner {
             background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #7c3aed 100%);
-            border-radius: 16px;
-            padding: 1.75rem 2rem;
+            border-radius: 12px;
+            padding: 0.75rem 1.25rem;
             color: #fff;
             position: relative;
             overflow: hidden;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.18);
+            margin-bottom: 0.75rem;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.15);
         }
         .page-banner::before {
             content: '';
             position: absolute;
-            top: -50px; right: -30px;
-            width: 170px; height: 170px;
+            top: -35px; right: -25px;
+            width: 120px; height: 120px;
             border-radius: 50%;
             background: rgba(255,255,255,0.08);
             pointer-events: none;
         }
-        .page-banner h2 { font-size: 1.45rem; font-weight: 700; margin-bottom: 0.25rem; position: relative; z-index: 1; }
-        .page-banner p { font-size: 0.9rem; opacity: 0.88; position: relative; z-index: 1; margin: 0; }
+        .page-banner h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.15rem; position: relative; z-index: 1; }
+        .page-banner p { font-size: 0.82rem; opacity: 0.88; position: relative; z-index: 1; margin: 0; }
 
         /* Stat Cards */
         .stat-card {
@@ -177,14 +177,14 @@
 
         {{-- Main Content --}}
         <main class="app-main">
-            <div class="app-content-header">
+            <div class="app-content-header pt-2 pb-0">
                 <div class="container-fluid">
-                    <div class="page-banner d-flex justify-content-between align-items-center">
+                    <div class="page-banner d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div>
                             <h2><i class="bi bi-person-badge-fill me-2"></i>Staff Directory & Management</h2>
                             <p>Manage daycare teachers, assistants, therapy specialists, and administrative staff members.</p>
                         </div>
-                        <a href="{{ route('admin.staff.create') }}" class="btn btn-light fw-bold shadow-sm" style="position:relative;z-index:2;">
+                        <a href="{{ route('admin.staff.create') }}" class="btn btn-light btn-sm fw-bold shadow-sm px-3" style="position:relative;z-index:2;">
                             <i class="bi bi-person-plus-fill me-1"></i> Add Staff Member
                         </a>
                     </div>

@@ -13,9 +13,17 @@
         body { font-family: 'Inter', sans-serif; }
         .page-banner {
             background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #7c3aed 100%);
-            border-radius: 16px; padding: 1.75rem 2rem; color: #fff; margin-bottom: 1.5rem;
+            border-radius: 12px; padding: 0.75rem 1.25rem; color: #fff; margin-bottom: 0.75rem;
+            position: relative; overflow: hidden;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.15);
         }
-        .page-banner h2 { font-size: 1.45rem; font-weight: 700; }
+        .page-banner::before {
+            content: ''; position: absolute; top: -35px; right: -25px;
+            width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.08);
+            pointer-events: none;
+        }
+        .page-banner h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.15rem; position: relative; z-index: 1; }
+        .page-banner p { font-size: 0.82rem; opacity: 0.88; position: relative; z-index: 1; margin: 0; }
     </style>
 </head>
 <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
@@ -47,14 +55,14 @@
 
         {{-- Main Content --}}
         <main class="app-main">
-            <div class="app-content-header">
+            <div class="app-content-header pt-2 pb-0">
                 <div class="container-fluid">
-                    <div class="page-banner d-flex justify-content-between align-items-center">
+                    <div class="page-banner d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div>
                             <h2>Programs</h2>
                             <p>Manage daycare programs, rates, and capacity</p>
                         </div>
-                        <a href="{{ route('admin.programs.create') }}" class="btn btn-light fw-bold shadow-sm">
+                        <a href="{{ route('admin.programs.create') }}" class="btn btn-light btn-sm fw-bold shadow-sm px-3" style="position:relative;z-index:1;">
                             <i class="bi bi-plus-lg me-1"></i> Add Program
                         </a>
                     </div>

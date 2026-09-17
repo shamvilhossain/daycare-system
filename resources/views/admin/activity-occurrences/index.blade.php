@@ -14,9 +14,17 @@
         body { font-family: 'Inter', sans-serif; }
         .page-banner {
             background: linear-gradient(135deg, #059669 0%, #10b981 50%, #14b8a6 100%);
-            border-radius: 16px; padding: 1.75rem 2rem; color: #fff; margin-bottom: 1.5rem;
+            border-radius: 12px; padding: 0.75rem 1.25rem; color: #fff; margin-bottom: 0.75rem;
+            position: relative; overflow: hidden;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);
         }
-        .page-banner h2 { font-size: 1.45rem; font-weight: 700; }
+        .page-banner::before {
+            content: ''; position: absolute; top: -35px; right: -25px;
+            width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.08);
+            pointer-events: none;
+        }
+        .page-banner h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.15rem; position: relative; z-index: 1; }
+        .page-banner p { font-size: 0.82rem; opacity: 0.88; position: relative; z-index: 1; margin: 0; }
         .stat-card {
             border: none; border-radius: 14px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.04);
@@ -71,22 +79,22 @@
 
         {{-- Main Content --}}
         <main class="app-main">
-            <div class="app-content-header py-4">
+            <div class="app-content-header pt-2 pb-0">
                 <div class="container-fluid">
                     {{-- Banner --}}
-                    <div class="page-banner d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="page-banner d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div>
                             <h2><i class="bi bi-calendar-check me-2"></i>Daily Activity Schedule & Observations</h2>
                             <p class="mb-0 text-white-50">Operational timeline of planned group activities, staff observations, and media records</p>
                         </div>
-                        <div class="d-flex gap-2">
-                            <a href="{{ route('admin.reports.activity-calendar') }}" class="btn btn-light text-success fw-semibold">
+                        <div class="d-flex gap-2 flex-wrap" style="position:relative;z-index:1;">
+                            <a href="{{ route('admin.reports.activity-calendar') }}" class="btn btn-sm btn-light text-success fw-semibold">
                                 <i class="bi bi-calendar3 me-1"></i> Monthly Report
                             </a>
-                            <a href="{{ route('admin.activities.index') }}" class="btn btn-outline-light">
+                            <a href="{{ route('admin.activities.index') }}" class="btn btn-sm btn-outline-light">
                                 <i class="bi bi-palette me-1"></i> Activity Catalog
                             </a>
-                            <a href="{{ route('admin.activity-occurrences.create', ['date' => $date !== 'all' ? $date : now()->toDateString()]) }}" class="btn btn-light text-success fw-semibold">
+                            <a href="{{ route('admin.activity-occurrences.create', ['date' => $date !== 'all' ? $date : now()->toDateString()]) }}" class="btn btn-sm btn-light text-success fw-semibold px-3">
                                 <i class="bi bi-plus-circle me-1"></i> Schedule Activity
                             </a>
                         </div>

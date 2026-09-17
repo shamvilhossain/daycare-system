@@ -14,9 +14,17 @@
         body { font-family: 'Inter', sans-serif; }
         .page-banner {
             background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 50%, #6366f1 100%);
-            border-radius: 16px; padding: 1.75rem 2rem; color: #fff; margin-bottom: 1.5rem;
+            border-radius: 12px; padding: 0.75rem 1.25rem; color: #fff; margin-bottom: 0.75rem;
+            position: relative; overflow: hidden;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
         }
-        .page-banner h2 { font-size: 1.45rem; font-weight: 700; }
+        .page-banner::before {
+            content: ''; position: absolute; top: -35px; right: -25px;
+            width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.08);
+            pointer-events: none;
+        }
+        .page-banner h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.15rem; position: relative; z-index: 1; }
+        .page-banner p { font-size: 0.82rem; opacity: 0.88; position: relative; z-index: 1; margin: 0; }
         .stat-card {
             border: none; border-radius: 14px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.04);
@@ -79,23 +87,23 @@
 
         {{-- Main Content --}}
         <main class="app-main">
-            <div class="app-content-header">
+            <div class="app-content-header pt-2 pb-0">
                 <div class="container-fluid">
                     {{-- Banner --}}
-                    <div class="page-banner d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="page-banner d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div>
                             <h2><i class="bi bi-palette-fill me-2"></i>Activity Catalog</h2>
                             <p class="mb-0 text-white-50">Curriculum catalog, learning domains, and materials reference</p>
                         </div>
-                        <div class="d-flex gap-2">
-                            <a href="{{ route('admin.reports.activity-calendar') }}" class="btn btn-outline-light">
+                        <div class="d-flex gap-2 flex-wrap" style="position:relative;z-index:1;">
+                            <a href="{{ route('admin.reports.activity-calendar') }}" class="btn btn-sm btn-outline-light">
                                 <i class="bi bi-calendar3 me-1"></i> Calendar Report
                             </a>
-                            <a href="{{ route('admin.activity-occurrences.index') }}" class="btn btn-outline-light">
+                            <a href="{{ route('admin.activity-occurrences.index') }}" class="btn btn-sm btn-outline-light">
                                 <i class="bi bi-calendar-week me-1"></i> Live Activity Schedule
                             </a>
                             @role('admin')
-                            <a href="{{ route('admin.activities.create') }}" class="btn btn-light text-primary fw-semibold">
+                            <a href="{{ route('admin.activities.create') }}" class="btn btn-sm btn-light text-primary fw-semibold px-3">
                                 <i class="bi bi-plus-lg me-1"></i> Add Activity
                             </a>
                             @endrole

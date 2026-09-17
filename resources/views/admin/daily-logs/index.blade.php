@@ -12,15 +12,17 @@
         body { font-family: 'Inter', sans-serif; }
         .page-banner {
             background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
-            border-radius: 16px; padding: 1.75rem 2rem; color: #fff; margin-bottom: 1.5rem;
+            border-radius: 12px; padding: 0.75rem 1.25rem; color: #fff; margin-bottom: 0.75rem;
             position: relative; overflow: hidden;
-            box-shadow: 0 10px 25px rgba(99,102,241,0.2);
+            box-shadow: 0 4px 15px rgba(99,102,241,0.15);
         }
         .page-banner::before {
-            content: ''; position: absolute; top: -50px; right: -30px;
-            width: 170px; height: 170px; border-radius: 50%; background: rgba(255,255,255,0.08);
+            content: ''; position: absolute; top: -35px; right: -25px;
+            width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.08);
             pointer-events: none;
         }
+        .page-banner h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.15rem; position: relative; z-index: 1; }
+        .page-banner p { font-size: 0.82rem; opacity: 0.88; position: relative; z-index: 1; margin: 0; }
         .child-pill {
             background: #fff;
             border: 1px solid #e2e8f0;
@@ -85,15 +87,15 @@
 
         {{-- Main Content --}}
         <main class="app-main">
-            <div class="app-content-header">
+            <div class="app-content-header pt-2 pb-0">
                 <div class="container-fluid">
-                    <div class="page-banner d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div class="page-banner d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
                         <div>
                             <h2><i class="bi bi-journal-text me-2"></i>Daily Operational Child Logs</h2>
                             <p>Track merged daily routines — naps, meals, learning activities, diaper changes, and health incidents</p>
                         </div>
                         <div class="d-flex align-items-center gap-2" style="position:relative;z-index:1;">
-                            <a href="{{ route('admin.attendance.index', ['date' => $date]) }}" class="btn btn-light fw-bold shadow-sm">
+                            <a href="{{ route('admin.attendance.index', ['date' => $date]) }}" class="btn btn-light btn-sm fw-bold shadow-sm px-3">
                                 <i class="bi bi-clock-history me-1"></i> Attendance Desk
                             </a>
                         </div>

@@ -24,24 +24,25 @@
         /* Page Banner */
         .page-banner {
             background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #7c3aed 100%);
-            border-radius: 16px;
-            padding: 1.75rem 2rem;
+            border-radius: 12px;
+            padding: 0.75rem 1.25rem;
             color: #fff;
             position: relative;
             overflow: hidden;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.18);
+            margin-bottom: 0.75rem;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.15);
         }
         .page-banner::before {
             content: '';
             position: absolute;
-            top: -50px; right: -30px;
-            width: 170px; height: 170px;
+            top: -35px; right: -25px;
+            width: 120px; height: 120px;
             border-radius: 50%;
             background: rgba(255,255,255,0.08);
+            pointer-events: none;
         }
-        .page-banner h2 { font-size: 1.45rem; font-weight: 700; margin-bottom: 0.25rem; position: relative; z-index: 1; }
-        .page-banner p { font-size: 0.9rem; opacity: 0.88; position: relative; z-index: 1; margin: 0; }
+        .page-banner h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.15rem; position: relative; z-index: 1; }
+        .page-banner p { font-size: 0.82rem; opacity: 0.88; position: relative; z-index: 1; margin: 0; }
 
         /* Stat Cards */
         .stat-card {
@@ -124,12 +125,12 @@
             background: #fff;
             color: #4f46e5;
             border: none;
-            padding: 0.6rem 1.25rem;
-            border-radius: 10px;
+            padding: 0.45rem 1rem;
+            border-radius: 8px;
             font-weight: 600;
-            font-size: 0.88rem;
+            font-size: 0.82rem;
             transition: all 0.25s ease;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -239,7 +240,7 @@
 
         {{-- Main Content --}}
         <main class="app-main">
-            <div class="app-content-header">
+            <div class="app-content-header pt-2 pb-0">
                 <div class="container-fluid">
                     <div class="row">
                         <div class="col-sm-6">
@@ -273,7 +274,7 @@
                     @endif
 
                     {{-- Page Banner --}}
-                    <div class="page-banner d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                    <div class="page-banner d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
                         <div>
                             <h2><i class="bi bi-person-plus-fill me-2"></i> User & Role Management</h2>
                             <p>Create new system users, assign Spatie roles (Admin, Staff, Parent), and auto-create profiles in an atomic transaction.</p>

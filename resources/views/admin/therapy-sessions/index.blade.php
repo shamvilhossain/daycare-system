@@ -12,17 +12,17 @@
         body { font-family: 'Inter', sans-serif; }
         .page-banner {
             background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c084fc 100%);
-            border-radius: 16px; padding: 1.75rem 2rem; color: #fff; margin-bottom: 1.5rem;
+            border-radius: 12px; padding: 0.75rem 1.25rem; color: #fff; margin-bottom: 0.75rem;
             position: relative; overflow: hidden;
-            box-shadow: 0 10px 25px rgba(124,58,237,0.18);
+            box-shadow: 0 4px 15px rgba(124,58,237,0.15);
         }
         .page-banner::before {
-            content: ''; position: absolute; top: -50px; right: -30px;
-            width: 170px; height: 170px; border-radius: 50%; background: rgba(255,255,255,0.08);
+            content: ''; position: absolute; top: -35px; right: -25px;
+            width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.08);
             pointer-events: none;
         }
-        .page-banner h2 { font-size: 1.45rem; font-weight: 700; margin-bottom: 0.25rem; position: relative; z-index: 1; }
-        .page-banner p { font-size: 0.9rem; opacity: 0.88; position: relative; z-index: 1; margin: 0; }
+        .page-banner h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.15rem; position: relative; z-index: 1; }
+        .page-banner p { font-size: 0.82rem; opacity: 0.88; position: relative; z-index: 1; margin: 0; }
         .stat-card {
             border-radius: 12px;
             transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -69,14 +69,14 @@
 
         {{-- Main Content --}}
         <main class="app-main">
-            <div class="app-content-header">
+            <div class="app-content-header pt-2 pb-0">
                 <div class="container-fluid">
-                    <div class="page-banner d-flex justify-content-between align-items-center">
+                    <div class="page-banner d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div>
                             <h2><i class="bi bi-heart-pulse-fill me-2"></i>Therapy Sessions</h2>
                             <p>Schedule and manage therapy sessions with overlap detection and specialization matching</p>
                         </div>
-                        <a href="{{ route('admin.therapy-sessions.create') }}" class="btn btn-light fw-bold shadow-sm" style="position:relative;z-index:1;">
+                        <a href="{{ route('admin.therapy-sessions.create') }}" class="btn btn-light btn-sm fw-bold shadow-sm px-3" style="position:relative;z-index:1;">
                             <i class="bi bi-plus-lg me-1"></i> New Session
                         </a>
                     </div>
