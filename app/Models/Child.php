@@ -82,4 +82,20 @@ class Child extends Model
     {
         return $this->hasMany(TherapySession::class);
     }
+
+    public function safetyTags()
+    {
+        return $this->hasMany(ChildSafetyTag::class);
+    }
+
+    /**
+     * Get the primary parent profile for this child.
+     * Returns the parent marked as primary, or the first parent as fallback.
+     */
+    public function getParentProfileAttribute(): ?ParentProfile
+    {
+        $parents = $this->relationLoaded('parents') ? $this->parents : $this->parents()->get();
+
+        return $parents->first(fn($p) => $p->pivot->is_primary) ?? $parents->first();
+    }
 }

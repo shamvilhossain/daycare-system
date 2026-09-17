@@ -15,6 +15,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\TherapySessionController;
+use App\Http\Controllers\ChildSafetyCardController;
 use App\Models\Announcement;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +37,12 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
+});
+
+// Public Child Safety QR Card & Found Reporting (Throttled)
+Route::middleware('throttle:30,1')->group(function () {
+    Route::get('/s/{token}', [ChildSafetyCardController::class, 'show'])->name('safety.card');
+    Route::post('/s/{token}/found', [ChildSafetyCardController::class, 'reportFound'])->name('safety.report');
 });
 
 Route::middleware('auth')->group(function () {
@@ -109,6 +116,8 @@ Route::middleware('auth')->group(function () {
 
         // Children management
         Route::resource('/admin/children', ChildController::class, ['as' => 'admin']);
+        Route::post('/admin/children/{child}/safety-tag', [ChildController::class, 'generateSafetyTag'])->name('admin.children.generate-safety-tag');
+        Route::patch('/admin/children/safety-tag/{tag}/deactivate', [ChildController::class, 'deactivateSafetyTag'])->name('admin.children.deactivate-safety-tag');
         Route::get('/admin/documents/{document}/download', [ChildController::class, 'downloadDocument'])->name('admin.documents.download');
         Route::delete('/admin/documents/{document}', [ChildController::class, 'destroyDocument'])->name('admin.documents.destroy');
 

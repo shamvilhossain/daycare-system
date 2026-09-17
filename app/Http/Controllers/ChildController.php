@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Child;
+use App\Models\ChildSafetyTag;
 use App\Models\Document;
 use App\Models\ParentProfile;
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -275,5 +278,63 @@ class ChildController extends Controller
         }
 
         return back()->with('success', 'Document deleted successfully.');
+    }
+
+    public function show(Child $child)
+    {
+        $child->load([
+            'parents',
+            'documents',
+            'safetyTags' => fn($query) => $query->latest()->with('foundReports'),
+            'therapySessions' => fn($query) => $query->latest(),
+        ]);
+
+        return view('admin.children.show', compact('child'));
+    }
+
+    public function generateSafetyTag(Request $request, Child $child)
+    {
+        $validated = $request->validate([
+            'label' => 'nullable|string|max:100',
+        ]);
+
+        $tag = DB::transaction(function () use ($child, $validated) {
+            return $child->safetyTags()->create([
+                'label'     => $validated['label'] ?? null,
+                'is_active' => true,
+            ]);
+        });
+
+        try {
+            $builder = new Builder(
+                writer: new PngWriter(),
+                data: route('safety.card', $tag->token),
+                size: 400,
+                margin: 10,
+            );
+
+            $result = $builder->build();
+            $qrPath = "safety-tags/{$tag->token}.png";
+
+            Storage::disk('public')->put($qrPath, $result->getString());
+
+            $tag->update(['qr_path' => $qrPath]);
+        } catch (\Throwable $e) {
+            report($e);
+            return back()->with('error', 'Safety tag was created, but failed to generate QR image: ' . $e->getMessage());
+        }
+
+        return back()->with('success', 'Safety QR Tag generated successfully.');
+    }
+
+    public function deactivateSafetyTag(ChildSafetyTag $tag)
+    {
+        $tag->update(['is_active' => false]);
+
+        if ($tag->qr_path && Storage::disk('public')->exists($tag->qr_path)) {
+            Storage::disk('public')->delete($tag->qr_path);
+        }
+
+        return back()->with('success', 'Safety tag has been deactivated and the QR code removed.');
     }
 }

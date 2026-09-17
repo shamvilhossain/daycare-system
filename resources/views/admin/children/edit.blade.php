@@ -33,7 +33,10 @@
                 <div class="container-fluid">
                     <div class="row">
                         <div class="col-sm-6"><h3 class="mb-0">Edit Child — {{ $child->full_name }}</h3></div>
-                        <div class="col-sm-6 text-end"><a href="{{ route('admin.children.index') }}" class="btn btn-secondary">Back to Children</a></div>
+                        <div class="col-sm-6 text-end">
+                            <a href="{{ route('admin.children.show', $child) }}" class="btn btn-outline-success me-1"><i class="bi bi-qr-code"></i> Safety Tags</a>
+                            <a href="{{ route('admin.children.index') }}" class="btn btn-secondary">Back to Children</a>
+                        </div>
                     </div>
                 </div>
             </div>

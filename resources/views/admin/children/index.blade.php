@@ -159,6 +159,7 @@
                                                 @endif
                                             </td>
                                             <td class="text-end">
+                                                <a href="{{ route('admin.children.show', $child) }}" class="btn btn-sm btn-outline-success" title="View Profile & Safety QR Tags"><i class="bi bi-qr-code-scan"></i></a>
                                                 <a href="{{ route('admin.children.edit', $child) }}" class="btn btn-sm btn-outline-primary" title="Edit Child & Documents"><i class="bi bi-pencil"></i></a>
                                                 <form action="{{ route('admin.children.destroy', $child) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Delete this child and all associated documents?');">
                                                     @csrf @method('DELETE')
