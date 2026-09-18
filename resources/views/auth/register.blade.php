@@ -282,6 +282,12 @@
             margin-bottom: 0.4rem;
         }
 
+        .required-star {
+            color: var(--error);
+            font-weight: 700;
+            margin-left: 2px;
+        }
+
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -651,7 +657,7 @@
                     {{-- First & Last Name in a row --}}
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="first_name">First Name</label>
+                            <label for="first_name">First Name <span class="required-star">*</span></label>
                             <div class="input-wrapper">
                                 <i class="bi bi-person input-icon"></i>
                                 <input type="text"
@@ -665,7 +671,7 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="last_name">Last Name</label>
+                            <label for="last_name">Last Name <span class="required-star">*</span></label>
                             <div class="input-wrapper">
                                 <i class="bi bi-person input-icon"></i>
                                 <input type="text"
@@ -681,7 +687,7 @@
 
                     {{-- Email --}}
                     <div class="form-group">
-                        <label for="email">Email Address</label>
+                        <label for="email">Email Address <span class="required-star">*</span></label>
                         <div class="input-wrapper">
                             <i class="bi bi-envelope input-icon"></i>
                             <input type="email"
@@ -694,36 +700,40 @@
                         </div>
                     </div>
 
-                    {{-- Phone & Role in a row --}}
+                    {{-- Mobile & Role in a row --}}
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="phone">Phone <span style="color: var(--text-muted); font-weight: 400;">(optional)</span></label>
+                            <label for="mobile">Mobile Number <span class="required-star">*</span></label>
                             <div class="input-wrapper">
-                                <i class="bi bi-telephone input-icon"></i>
-                                <input type="text"
-                                       name="phone"
-                                       id="phone"
-                                       class="@error('phone') is-invalid @enderror"
-                                       placeholder="+1 (555) 000-0000"
-                                       value="{{ old('phone') }}">
+                                <i class="bi bi-phone input-icon"></i>
+                                <input type="tel"
+                                       name="mobile"
+                                       id="mobile"
+                                       class="@error('mobile') is-invalid @enderror"
+                                       placeholder="e.g. 017xxxxxxxx"
+                                       value="{{ old('mobile') }}"
+                                       required>
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="role">Role</label>
+                            <label for="role">Role <span class="required-star">*</span></label>
                             <div class="input-wrapper">
                                 <i class="bi bi-people input-icon"></i>
                                 <select name="role" id="role" class="@error('role') is-invalid @enderror" required>
                                     <option value="" disabled {{ old('role') ? '' : 'selected' }}>Select role</option>
-                                    <option value="parent" {{ old('role') === 'parent' ? 'selected' : '' }}>Parent</option>
+                                    <option value="parent" {{ old('role', 'parent') === 'parent' ? 'selected' : '' }}>Parent</option>
                                     <option value="staff" {{ old('role') === 'staff' ? 'selected' : '' }}>Staff</option>
                                 </select>
+                            </div>
+                            <div id="staff-approval-note" style="display: {{ old('role') === 'staff' ? 'block' : 'none' }}; font-size: 0.775rem; margin-top: 0.35rem; color: #b45309; line-height: 1.3;">
+                                <i class="bi bi-info-circle me-1"></i> Staff registrations require administrator approval before sign in.
                             </div>
                         </div>
                     </div>
 
                     {{-- Password --}}
                     <div class="form-group">
-                        <label for="password">Password</label>
+                        <label for="password">Password <span class="required-star">*</span></label>
                         <div class="input-wrapper">
                             <i class="bi bi-lock input-icon"></i>
                             <input type="password"
@@ -748,7 +758,7 @@
 
                     {{-- Confirm Password --}}
                     <div class="form-group">
-                        <label for="password_confirmation">Confirm Password</label>
+                        <label for="password_confirmation">Confirm Password <span class="required-star">*</span></label>
                         <div class="input-wrapper">
                             <i class="bi bi-lock-fill input-icon"></i>
                             <input type="password"
@@ -812,6 +822,15 @@
                 strengthText.textContent = labels[score] || '';
             }
         });
+
+        // Show approval notice when staff role is selected
+        const roleSelect = document.getElementById('role');
+        const staffNote = document.getElementById('staff-approval-note');
+        if (roleSelect && staffNote) {
+            roleSelect.addEventListener('change', function() {
+                staffNote.style.display = this.value === 'staff' ? 'block' : 'none';
+            });
+        }
     </script>
 </body>
 </html>

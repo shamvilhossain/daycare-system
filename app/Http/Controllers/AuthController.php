@@ -21,40 +21,64 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
+        // Support both mobile and legacy phone parameter; normalize spaces and hyphens
+        $rawMobile = $request->input('mobile', $request->input('phone'));
+        if ($rawMobile !== null) {
+            $cleanedMobile = preg_replace('/[\s\-]/', '', (string)$rawMobile);
+            $request->merge(['mobile' => $cleanedMobile]);
+        }
+
         $data = $request->validate([
             'email' => 'required|email|unique:users,email',
             'password' => ['required', 'confirmed', Password::min(8)],
             'role' => 'required|in:parent,staff', // admin never self-registers
-            'first_name' => 'required|string',
-            'last_name' => 'required|string',
-            'phone' => 'nullable|string',
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'mobile' => [
+                'required',
+                'regex:/^(?:\+?88|88)?01[3-9]\d{8}$/',
+            ],
+        ], [
+            'mobile.required' => 'The mobile number is required.',
+            'mobile.regex' => 'Please enter a valid Bangladeshi mobile number (e.g. 017xxxxxxxx, 018xxxxxxxx, 019xxxxxxxx).',
         ]);
 
         $user = DB::transaction(function () use ($data) {
+            $isStaff = $data['role'] === 'staff';
+            $isActive = $isStaff ? 0 : 1;
+
             $user = User::create([
-                'email' => $data['email'],
+                'email' => strtolower(trim($data['email'])),
                 'password' => $data['password'],
                 'role' => $data['role'],
+                'is_active' => $isActive,
             ]);
 
             $user->assignRole($data['role']);
 
             if ($data['role'] === 'parent') {
                 $user->parentProfile()->create([
-                    'first_name' => $data['first_name'],
-                    'last_name' => $data['last_name'],
-                    'phone' => $data['phone'] ?? null,
+                    'first_name' => trim($data['first_name']),
+                    'last_name' => trim($data['last_name']),
+                    'mobile' => $data['mobile'],
                 ]);
             } else {
                 $user->staffProfile()->create([
-                    'first_name' => $data['first_name'],
-                    'last_name' => $data['last_name'],
+                    'first_name' => trim($data['first_name']),
+                    'last_name' => trim($data['last_name']),
+                    'mobile' => $data['mobile'],
                     'role' => 'teacher',
+                    'is_active' => 0,
                 ]);
             }
 
             return $user;
         });
+
+        // Staff self-registration requires administrator activation before login
+        if ($user->role === 'staff' || !$user->is_active) {
+            return redirect()->route('login')->with('success', 'Registration successful! Your staff account is pending administrator approval before you can sign in.');
+        }
 
         Auth::login($user);
         $request->session()->regenerate();
@@ -90,11 +114,14 @@ class AuthController extends Controller
 
         RateLimiter::clear($throttleKey);
 
-
-
         if (!Auth::user()->is_active) {
+            $isStaff = Auth::user()->role === 'staff';
             Auth::logout();
-            return back()->withErrors(['email' => 'This account has been deactivated.']);
+            return back()->withErrors([
+                'email' => $isStaff
+                    ? 'Your staff account is currently inactive or pending administrator approval.'
+                    : 'This account has been deactivated.'
+            ])->onlyInput('email');
         }
 
         $request->session()->regenerate();

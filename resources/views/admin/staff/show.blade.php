@@ -167,7 +167,7 @@
                             <div class="card card-custom mb-4 text-center p-4">
                                 <div class="mb-3 d-flex justify-content-center">
                                     @if ($staff->photo_url)
-                                        <img src="{{ $staff->photo_url }}" class="profile-avatar-lg" alt="{{ $staff->full_name }}">
+                                        <img src="{{ $staff->photo_url }}" class="profile-avatar-lg" alt="{{ $staff->full_name }}" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'profile-avatar-placeholder-lg\'>{{ $staff->initials }}</div>';">
                                     @else
                                         <div class="profile-avatar-placeholder-lg">
                                             {{ $staff->initials }}
@@ -175,7 +175,12 @@
                                     @endif
                                 </div>
                                 <h4 class="fw-bold mb-1">{{ $staff->full_name }}</h4>
-                                <div class="text-muted small mb-3">{{ $staff->user?->email }}</div>
+                                <div class="text-muted small mb-1">{{ $staff->user?->email }}</div>
+                                @if ($staff->mobile)
+                                    <div class="text-muted small mb-3"><i class="bi bi-phone me-1"></i>{{ $staff->mobile }}</div>
+                                @else
+                                    <div class="mb-3"></div>
+                                @endif
 
                                 <div class="d-flex flex-wrap justify-content-center gap-1 mb-4">
                                     @php
@@ -252,6 +257,18 @@
                                 </div>
                                 <div class="card-body p-4">
                                     <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="info-label">Mobile Number</div>
+                                            <div class="info-value">
+                                                @if ($staff->mobile)
+                                                    <a href="tel:{{ $staff->mobile }}" class="text-decoration-none text-dark fw-medium">
+                                                        <i class="bi bi-telephone me-1 text-primary"></i>{{ $staff->mobile }}
+                                                    </a>
+                                                @else
+                                                    Not provided
+                                                @endif
+                                            </div>
+                                        </div>
                                         <div class="col-md-6">
                                             <div class="info-label">National ID (NID)</div>
                                             <div class="info-value">{{ $staff->nid ?? 'Not provided' }}</div>

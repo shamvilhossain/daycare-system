@@ -196,6 +196,37 @@
             color: #6b7280;
             border-bottom: 1px solid #e5e7eb;
         }
+
+        /* Pagination Styling */
+        .pagination {
+            margin-bottom: 0;
+            gap: 4px;
+        }
+        .page-item .page-link {
+            color: #4b5563;
+            border-radius: 8px !important;
+            border: 1px solid #e5e7eb;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .page-item .page-link:hover {
+            background-color: #f3f4f6;
+            color: #1f2937;
+            border-color: #d1d5db;
+        }
+        .page-item.active .page-link {
+            background-color: #4f46e5;
+            border-color: #4f46e5;
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+        }
+        .page-item.disabled .page-link {
+            color: #9ca3af;
+            background-color: #f9fafb;
+            border-color: #e5e7eb;
+        }
     </style>
 </head>
 <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
@@ -336,7 +367,7 @@
                                 <div class="col-12 col-md-5">
                                     <div class="input-group">
                                         <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
-                                        <input type="text" name="search" class="form-control bg-light border-start-0 ps-0" placeholder="Search by name, email, phone, or NID..." value="{{ request('search') }}">
+                                        <input type="text" name="search" class="form-control bg-light border-start-0 ps-0" placeholder="Search by name, email, mobile, or NID..." value="{{ request('search') }}">
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4 d-flex gap-1 flex-wrap">
@@ -410,7 +441,7 @@
                                                 @if($user->parentProfile)
                                                     <div class="small">
                                                         @if($user->parentProfile->mobile)
-                                                            <div><i class="bi bi-telephone text-muted me-1"></i> {{ $user->parentProfile->mobile }}</div>
+                                                            <div><i class="bi bi-phone text-muted me-1"></i> {{ $user->parentProfile->mobile }}</div>
                                                         @endif
                                                         @if($user->parentProfile->city || $user->parentProfile->occupation)
                                                             <div class="text-muted">{{ $user->parentProfile->occupation ?? 'Parent' }} {{ $user->parentProfile->city ? '• '.$user->parentProfile->city : '' }}</div>
@@ -418,6 +449,9 @@
                                                     </div>
                                                 @elseif($user->staffProfile)
                                                     <div class="small">
+                                                        @if($user->staffProfile->mobile)
+                                                            <div><i class="bi bi-phone text-muted me-1"></i> {{ $user->staffProfile->mobile }}</div>
+                                                        @endif
                                                         <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ ucfirst($user->staffProfile->role ?? 'Staff') }}</span>
                                                         @if($user->staffProfile->hire_date)
                                                             <span class="text-muted ms-1">Hired: {{ \Carbon\Carbon::parse($user->staffProfile->hire_date)->format('M Y') }}</span>
@@ -482,13 +516,8 @@
                         </div>
 
                         @if($users->hasPages())
-                            <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center py-3">
-                                <div class="text-muted small">
-                                    Showing {{ $users->firstItem() }} to {{ $users->lastItem() }} of {{ $users->total() }} users
-                                </div>
-                                <div>
-                                    {{ $users->links() }}
-                                </div>
+                            <div class="card-footer bg-white border-top py-3">
+                                {{ $users->links() }}
                             </div>
                         @endif
                     </div>

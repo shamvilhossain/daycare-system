@@ -35,7 +35,7 @@ class SendFoundChildAlertJob implements ShouldQueue
         }
 
         $primaryParent = $child->parentProfile;
-        $guardianPhone = $primaryParent?->phone ?? $child->ec_phone;
+        $guardianPhone = $primaryParent?->mobile ?? $child->ec_phone;
 
         $mapsUrl = null;
         if ($this->report->latitude && $this->report->longitude) {

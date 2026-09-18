@@ -28,4 +28,25 @@ class ParentProfile extends Model
     {
         return trim("{$this->first_name} {$this->last_name}");
     }
+
+    /**
+     * Alias for mobile column to ensure compatibility with phone references.
+     */
+    public function getPhoneAttribute(): ?string
+    {
+        return $this->attributes['mobile'] ?? null;
+    }
+
+    public function setPhoneAttribute($value): void
+    {
+        $this->attributes['mobile'] = $value;
+    }
+
+    /**
+     * Helper to access parent's account email.
+     */
+    public function getEmailAttribute(): ?string
+    {
+        return $this->user?->email;
+    }
 }

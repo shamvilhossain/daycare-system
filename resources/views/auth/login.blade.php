@@ -224,6 +224,20 @@
         }
 
         /* ===== ALERT ===== */
+        .auth-alert-success {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: var(--radius);
+            padding: 0.875rem 1rem;
+            margin-bottom: 1.5rem;
+            color: #065f46;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .auth-alert {
             background: var(--error-bg);
             border: 1px solid var(--error-border);
@@ -588,6 +602,14 @@
 
                 <h1 class="auth-heading">Sign In</h1>
                 <p class="auth-subheading">Enter your credentials to access your account</p>
+
+                {{-- Success Notification --}}
+                @if (session('success'))
+                    <div class="auth-alert-success" id="auth-alert-success">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>{{ session('success') }}</span>
+                    </div>
+                @endif
 
                 {{-- Validation Errors --}}
                 @if ($errors->any())

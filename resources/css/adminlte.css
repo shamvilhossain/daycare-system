@@ -21,3 +21,35 @@
  *
  * See https://adminlte.io/themes/v4/docs/customization.html
  */
+
+/* Custom Pagination */
+.pagination {
+    margin-bottom: 0;
+    gap: 4px;
+}
+.page-item .page-link {
+    color: #4b5563;
+    border-radius: 8px !important;
+    border: 1px solid #e5e7eb;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.page-item .page-link:hover {
+    background-color: #f3f4f6;
+    color: #1f2937;
+    border-color: #d1d5db;
+}
+.page-item.active .page-link {
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+}
+.page-item.disabled .page-link {
+    color: #9ca3af;
+    background-color: #f9fafb;
+    border-color: #e5e7eb;
+}
+

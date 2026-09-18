@@ -200,7 +200,7 @@
                                                     @endif
                                                 </div>
                                                 <div class="small text-muted">
-                                                    <i class="bi bi-telephone me-1"></i> {{ $parent->phone ?: 'No phone' }}
+                                                    <i class="bi bi-phone me-1"></i> {{ $parent->mobile ?: 'No mobile' }}
                                                 </div>
                                                 @if ($parent->email)
                                                     <div class="small text-muted">

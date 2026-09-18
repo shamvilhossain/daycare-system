@@ -306,7 +306,14 @@
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
                                             </div>
-                                            <div class="col-12">
+                                            <div class="col-12 col-sm-6">
+                                                <label for="mobile" class="form-label">Mobile Number <span class="required">*</span></label>
+                                                <input type="text" class="form-control @error('mobile') is-invalid @enderror" id="mobile" name="mobile" value="{{ old('mobile', $user->profile?->mobile) }}" placeholder="e.g. 017xxxxxxxx" required>
+                                                @error('mobile')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                            <div class="col-12 col-sm-6">
                                                 <label for="image" class="form-label">Profile Image</label>
                                                 @if($user->profile?->image)
                                                     <div class="mb-2">
@@ -327,13 +334,6 @@
                                                 <i class="bi bi-heart-fill text-success"></i> Parent / Guardian Details
                                             </div>
                                             <div class="row g-3">
-                                                <div class="col-12 col-sm-6">
-                                                    <label for="mobile" class="form-label">Mobile / Phone Number</label>
-                                                    <input type="text" class="form-control @error('mobile') is-invalid @enderror" id="mobile" name="mobile" value="{{ old('mobile', $user->parentProfile?->mobile) }}" placeholder="e.g. 01711-000001">
-                                                    @error('mobile')
-                                                        <div class="invalid-feedback">{{ $message }}</div>
-                                                    @enderror
-                                                </div>
                                                 <div class="col-12 col-sm-6">
                                                     <label for="parent_nid" class="form-label">National ID (NID)</label>
                                                     <input type="text" class="form-control @error('nid') is-invalid @enderror" id="parent_nid" name="nid" value="{{ old('nid', $user->parentProfile?->nid) }}" placeholder="e.g. 1234567890">
@@ -362,12 +362,27 @@
                                                 <i class="bi bi-person-badge-fill text-primary"></i> Staff Member Details
                                             </div>
                                             <div class="row g-3">
+                                                @php
+                                                    $userStaffDept = old('department', $user->staffProfile?->department ?? 'daycare');
+                                                    $userStaffRole = old('staff_role', $user->staffProfile?->role ?? 'teacher');
+                                                @endphp
+                                                <div class="col-12 col-sm-6">
+                                                    <label for="user_staff_department" class="form-label">Department</label>
+                                                    <select class="form-select @error('department') is-invalid @enderror" id="user_staff_department" name="department">
+                                                        <option value="daycare" {{ $userStaffDept === 'daycare' ? 'selected' : '' }}>Daycare</option>
+                                                        <option value="therapy" {{ $userStaffDept === 'therapy' ? 'selected' : '' }}>Therapy</option>
+                                                    </select>
+                                                    @error('department')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
                                                 <div class="col-12 col-sm-6">
                                                     <label for="staff_role" class="form-label">Staff Designation / Role</label>
                                                     <select class="form-select @error('staff_role') is-invalid @enderror" id="staff_role" name="staff_role">
-                                                        <option value="teacher" {{ old('staff_role', $user->staffProfile?->role ?? 'teacher') === 'teacher' ? 'selected' : '' }}>Teacher</option>
-                                                        <option value="assistant" {{ old('staff_role', $user->staffProfile?->role) === 'assistant' ? 'selected' : '' }}>Assistant</option>
-                                                        <option value="admin" {{ old('staff_role', $user->staffProfile?->role) === 'admin' ? 'selected' : '' }}>Admin Staff</option>
+                                                        <option value="teacher" id="user_role_opt_teacher" {{ $userStaffRole === 'teacher' ? 'selected' : '' }} {{ $userStaffDept === 'therapy' ? 'disabled hidden' : '' }}>Teacher</option>
+                                                        <option value="assistant" id="user_role_opt_assistant" {{ $userStaffRole === 'assistant' ? 'selected' : '' }}>Assistant</option>
+                                                        <option value="therapist" id="user_role_opt_therapist" {{ $userStaffRole === 'therapist' ? 'selected' : '' }} {{ $userStaffDept === 'daycare' ? 'disabled hidden' : '' }}>Therapist</option>
+                                                        <option value="admin" id="user_role_opt_admin" {{ $userStaffRole === 'admin' ? 'selected' : '' }}>Admin Staff</option>
                                                     </select>
                                                     @error('staff_role')
                                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -484,10 +499,60 @@
             });
         }
 
+        function syncUserStaffDeptAndRole() {
+            const deptSelect = document.getElementById('user_staff_department');
+            const roleSelect = document.getElementById('staff_role');
+            if (!deptSelect || !roleSelect) return;
+
+            const teacherOpt = document.getElementById('user_role_opt_teacher');
+            const therapistOpt = document.getElementById('user_role_opt_therapist');
+
+            if (deptSelect.value === 'daycare') {
+                if (therapistOpt) {
+                    therapistOpt.disabled = true;
+                    therapistOpt.hidden = true;
+                }
+                if (teacherOpt) {
+                    teacherOpt.disabled = false;
+                    teacherOpt.hidden = false;
+                }
+                if (roleSelect.value === 'therapist') {
+                    roleSelect.value = 'teacher';
+                }
+            } else if (deptSelect.value === 'therapy') {
+                if (teacherOpt) {
+                    teacherOpt.disabled = true;
+                    teacherOpt.hidden = true;
+                }
+                if (therapistOpt) {
+                    therapistOpt.disabled = false;
+                    therapistOpt.hidden = false;
+                }
+                if (roleSelect.value === 'teacher') {
+                    roleSelect.value = 'therapist';
+                }
+            }
+        }
+
         // Initialize state on load
         document.addEventListener('DOMContentLoaded', () => {
             const selectedRole = "{{ old('role', $user->role) }}";
             onRoleChanged(selectedRole);
+
+            const deptSelect = document.getElementById('user_staff_department');
+            const roleSelect = document.getElementById('staff_role');
+            if (deptSelect && roleSelect) {
+                deptSelect.addEventListener('change', syncUserStaffDeptAndRole);
+                roleSelect.addEventListener('change', () => {
+                    if (roleSelect.value === 'therapist' && deptSelect.value !== 'therapy') {
+                        deptSelect.value = 'therapy';
+                    } else if (roleSelect.value === 'teacher' && deptSelect.value !== 'daycare') {
+                        deptSelect.value = 'daycare';
+                    }
+                    syncUserStaffDeptAndRole();
+                });
+                syncUserStaffDeptAndRole();
+            }
         });
     </script>
 </body>

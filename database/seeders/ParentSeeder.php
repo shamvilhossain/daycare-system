@@ -11,11 +11,11 @@ class ParentSeeder extends Seeder
     public function run(): void
     {
         $parents = [
-            ['email' => 'fatima.rahman@example.com',   'first_name' => 'Fatima', 'last_name' => 'Rahman',    'mobile' => '01711-000001', 'nid' => '1234567890', 'occupation' => 'Teacher', 'city' => 'Dhaka', 'address' => 'Mirpur, Dhaka'],
-            ['email' => 'karim.chowdhury@example.com',  'first_name' => 'Karim',  'last_name' => 'Chowdhury', 'mobile' => '01711-000002', 'nid' => '1234567891', 'occupation' => 'Engineer', 'city' => 'Dhaka', 'address' => 'Uttara, Dhaka'],
-            ['email' => 'rahim.ahmed@example.com',      'first_name' => 'Rahim',  'last_name' => 'Ahmed',     'mobile' => '01711-000003', 'nid' => '1234567892', 'occupation' => 'Doctor', 'city' => 'Chittagong', 'address' => 'Halishahar, Chittagong'],
-            ['email' => 'sabina.yasmin@example.com',    'first_name' => 'Sabina', 'last_name' => 'Yasmin',    'mobile' => '01711-000004', 'nid' => '1234567893', 'occupation' => 'Banker', 'city' => 'Sylhet', 'address' => 'Zindabazar, Sylhet'],
-            ['email' => 'arif.hasan@example.com',      'first_name' => 'Arif',   'last_name' => 'Hasan',     'mobile' => '01711-000005', 'nid' => '1234567894', 'occupation' => 'Businessperson', 'city' => 'Rajshahi', 'address' => 'Motihar, Rajshahi'],
+            ['email' => 'fatima.rahman@example.com',   'first_name' => 'Fatima', 'last_name' => 'Rahman',    'mobile' => '01711000001', 'nid' => '1234567890', 'occupation' => 'Teacher', 'city' => 'Dhaka', 'address' => 'Mirpur, Dhaka'],
+            ['email' => 'karim.chowdhury@example.com',  'first_name' => 'Karim',  'last_name' => 'Chowdhury', 'mobile' => '01711000002', 'nid' => '1234567891', 'occupation' => 'Engineer', 'city' => 'Dhaka', 'address' => 'Uttara, Dhaka'],
+            ['email' => 'rahim.ahmed@example.com',      'first_name' => 'Rahim',  'last_name' => 'Ahmed',     'mobile' => '01711000003', 'nid' => '1234567892', 'occupation' => 'Doctor', 'city' => 'Chittagong', 'address' => 'Halishahar, Chittagong'],
+            ['email' => 'sabina.yasmin@example.com',    'first_name' => 'Sabina', 'last_name' => 'Yasmin',    'mobile' => '01711000004', 'nid' => '1234567893', 'occupation' => 'Banker', 'city' => 'Sylhet', 'address' => 'Zindabazar, Sylhet'],
+            ['email' => 'arif.hasan@example.com',      'first_name' => 'Arif',   'last_name' => 'Hasan',     'mobile' => '01711000005', 'nid' => '1234567894', 'occupation' => 'Businessperson', 'city' => 'Rajshahi', 'address' => 'Motihar, Rajshahi'],
         ];
 
         foreach ($parents as $data) {

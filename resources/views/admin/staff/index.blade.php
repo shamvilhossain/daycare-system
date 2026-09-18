@@ -336,7 +336,7 @@
                                             <tr>
                                                 <td>
                                                     @if ($staff->photo_url)
-                                                        <img src="{{ $staff->photo_url }}" class="staff-avatar" alt="{{ $staff->full_name }}">
+                                                        <img src="{{ $staff->photo_url }}" class="staff-avatar" alt="{{ $staff->full_name }}" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'staff-avatar-placeholder\'>{{ $staff->initials }}</div>';">
                                                     @else
                                                         <div class="staff-avatar-placeholder">
                                                             {{ $staff->initials }}
@@ -348,6 +348,11 @@
                                                     <div class="text-muted small">
                                                         <i class="bi bi-envelope me-1"></i>{{ $staff->user?->email ?? 'No email linked' }}
                                                     </div>
+                                                    @if ($staff->mobile)
+                                                        <div class="text-muted small">
+                                                            <i class="bi bi-phone me-1"></i>{{ $staff->mobile }}
+                                                        </div>
+                                                    @endif
                                                 </td>
                                                 <td>
                                                     @php

@@ -88,10 +88,27 @@ class Staff extends Model
 
     public function getPhotoUrlAttribute(): ?string
     {
-        if ($this->image && \Illuminate\Support\Facades\Storage::disk('public')->exists($this->image)) {
-            return asset('storage/' . $this->image);
+        if (empty($this->image)) {
+            return null;
         }
-        return null;
+
+        // If stored as full URL
+        if (str_starts_with($this->image, 'http://') || str_starts_with($this->image, 'https://')) {
+            return $this->image;
+        }
+
+        // Clean any leading 'storage/' or '/' prefix
+        $cleanPath = ltrim(preg_replace('/^storage\//', '', $this->image), '/');
+
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($cleanPath)) {
+            return asset('storage/' . $cleanPath);
+        }
+
+        if (file_exists(public_path($this->image))) {
+            return asset($this->image);
+        }
+
+        return asset('storage/' . $cleanPath);
     }
 
     public function scopeSearch($query, ?string $term)
@@ -103,12 +120,26 @@ class Staff extends Model
         return $query->where(function ($q) use ($term) {
             $q->where('first_name', 'like', "%{$term}%")
                 ->orWhere('last_name', 'like', "%{$term}%")
+                ->orWhere('mobile', 'like', "%{$term}%")
                 ->orWhere('nid', 'like', "%{$term}%")
                 ->orWhere('note', 'like', "%{$term}%")
                 ->orWhereHas('user', function ($uq) use ($term) {
                     $uq->where('email', 'like', "%{$term}%");
                 });
         });
+    }
+
+    /**
+     * Alias for mobile attribute for consistency.
+     */
+    public function getPhoneAttribute(): ?string
+    {
+        return $this->attributes['mobile'] ?? null;
+    }
+
+    public function setPhoneAttribute($value): void
+    {
+        $this->attributes['mobile'] = $value;
     }
 
     public function scopeRole($query, ?string $role)

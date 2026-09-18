@@ -18,6 +18,7 @@ use App\Http\Controllers\TherapySessionController;
 use App\Http\Controllers\ChildSafetyCardController;
 use App\Models\Announcement;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 Route::get('/', function () {
     $announcements = Announcement::whereIn('audience', ['parents', 'all'])
@@ -155,3 +156,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/reports/activity-calendar', [ReportController::class, 'activityCalendar'])->name('admin.reports.activity-calendar');
     });
 });
+
+// Serve files from storage/app/public when public/storage symlink is not created (e.g. Windows/Laragon dev)
+Route::get('/storage/{path}', function (string $path) {
+    $cleanPath = str_replace(['..', "\0"], '', $path);
+    if (Storage::disk('public')->exists($cleanPath)) {
+        return Storage::disk('public')->response($cleanPath);
+    }
+    abort(404);
+})->where('path', '.*')->name('storage.local');

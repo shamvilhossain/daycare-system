@@ -74,13 +74,34 @@ class StaffController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->filled('mobile')) {
+            $request->merge([
+                'mobile' => preg_replace('/[\s\-]/', '', (string)$request->input('mobile'))
+            ]);
+        }
+
         $validated = $request->validate([
             'first_name'     => 'required|string|max:100',
             'last_name'      => 'required|string|max:100',
+            'mobile'         => [
+                'required',
+                'regex:/^(?:\+?88|88)?01[3-9]\d{8}$/',
+            ],
             'email'          => 'required|email|max:255|unique:users,email',
-            'password'       => ['required', 'confirmed', Password::min(8)],
-            'role'           => 'required|in:teacher,assistant,admin,therapist',
             'department'     => 'required|in:daycare,therapy',
+            'role'           => [
+                'required',
+                'in:teacher,assistant,admin,therapist',
+                function ($attribute, $value, $fail) use ($request) {
+                    $dept = $request->input('department');
+                    if ($dept === 'daycare' && $value === 'therapist') {
+                        $fail('Staff in the Daycare department cannot have the Therapist role.');
+                    }
+                    if ($dept === 'therapy' && $value === 'teacher') {
+                        $fail('Staff in the Therapy department cannot have the Teacher role.');
+                    }
+                },
+            ],
             'specialization' => 'nullable|in:slt,aba,ot',
             'nid'            => 'nullable|string|max:50',
             'date_of_birth'  => 'nullable|date|before:today',
@@ -88,6 +109,9 @@ class StaffController extends Controller
             'note'           => 'nullable|string|max:1000',
             'is_active'      => 'nullable|boolean',
             'image'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+        ], [
+            'mobile.required' => 'The mobile number is required.',
+            'mobile.regex'    => 'Please enter a valid Bangladeshi mobile number (e.g. 017xxxxxxxx, 018xxxxxxxx, 019xxxxxxxx).',
         ]);
 
         $imagePath = null;
@@ -117,6 +141,7 @@ class StaffController extends Controller
                 'user_id'        => $user->id,
                 'first_name'     => trim($validated['first_name']),
                 'last_name'      => trim($validated['last_name']),
+                'mobile'         => $validated['mobile'],
                 'role'           => $validated['role'],
                 'department'     => $validated['department'],
                 'specialization' => $validated['department'] === 'therapy' ? ($validated['specialization'] ?? null) : null,
@@ -162,13 +187,34 @@ class StaffController extends Controller
      */
     public function update(Request $request, Staff $staff)
     {
+        if ($request->filled('mobile')) {
+            $request->merge([
+                'mobile' => preg_replace('/[\s\-]/', '', (string)$request->input('mobile'))
+            ]);
+        }
+
         $validated = $request->validate([
             'first_name'     => 'required|string|max:100',
             'last_name'      => 'required|string|max:100',
+            'mobile'         => [
+                'required',
+                'regex:/^(?:\+?88|88)?01[3-9]\d{8}$/',
+            ],
             'email'          => 'required|email|max:255|unique:users,email,' . $staff->user_id,
-            'password'       => ['nullable', 'confirmed', Password::min(8)],
-            'role'           => 'required|in:teacher,assistant,admin,therapist',
             'department'     => 'required|in:daycare,therapy',
+            'role'           => [
+                'required',
+                'in:teacher,assistant,admin,therapist',
+                function ($attribute, $value, $fail) use ($request) {
+                    $dept = $request->input('department');
+                    if ($dept === 'daycare' && $value === 'therapist') {
+                        $fail('Staff in the Daycare department cannot have the Therapist role.');
+                    }
+                    if ($dept === 'therapy' && $value === 'teacher') {
+                        $fail('Staff in the Therapy department cannot have the Teacher role.');
+                    }
+                },
+            ],
             'specialization' => 'nullable|in:slt,aba,ot',
             'nid'            => 'nullable|string|max:50',
             'date_of_birth'  => 'nullable|date|before:today',
@@ -176,6 +222,9 @@ class StaffController extends Controller
             'note'           => 'nullable|string|max:1000',
             'is_active'      => 'nullable|boolean',
             'image'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+        ], [
+            'mobile.required' => 'The mobile number is required.',
+            'mobile.regex'    => 'Please enter a valid Bangladeshi mobile number (e.g. 017xxxxxxxx, 018xxxxxxxx, 019xxxxxxxx).',
         ]);
 
         $imagePath = $staff->image;
@@ -209,6 +258,7 @@ class StaffController extends Controller
             $staff->update([
                 'first_name'     => trim($validated['first_name']),
                 'last_name'      => trim($validated['last_name']),
+                'mobile'         => $validated['mobile'],
                 'role'           => $validated['role'],
                 'department'     => $validated['department'],
                 'specialization' => $validated['department'] === 'therapy' ? ($validated['specialization'] ?? null) : null,

@@ -23,7 +23,7 @@ class ChildSafetyCardController extends Controller
         $child->load('parents');
 
         $primaryParent = $child->parentProfile;
-        $guardianPhone = $primaryParent?->phone ?? $child->ec_phone;
+        $guardianPhone = $primaryParent?->mobile ?? $child->ec_phone;
 
         return view('safety.card', compact('tag', 'child', 'primaryParent', 'guardianPhone'));
     }

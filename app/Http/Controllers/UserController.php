@@ -32,6 +32,7 @@ class UserController extends Controller
                   ->orWhereHas('staffProfile', function ($sq) use ($search) {
                       $sq->where('first_name', 'like', "%{$search}%")
                          ->orWhere('last_name', 'like', "%{$search}%")
+                         ->orWhere('mobile', 'like', "%{$search}%")
                          ->orWhere('nid', 'like', "%{$search}%");
                   });
             });
@@ -75,6 +76,12 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->filled('mobile')) {
+            $request->merge([
+                'mobile' => preg_replace('/[\s\-]/', '', (string)$request->input('mobile'))
+            ]);
+        }
+
         $validated = $request->validate([
             'email'         => 'required|email|max:255|unique:users,email',
             'password'      => ['required', 'confirmed', Password::min(8)],
@@ -83,14 +90,30 @@ class UserController extends Controller
             'last_name'     => 'required|string|max:100',
             'is_active'     => 'nullable|boolean',
 
-            // Parent-specific fields
-            'mobile'        => 'nullable|string|max:30',
+            // Profile fields
+            'mobile'        => in_array($request->input('role'), ['parent', 'staff'])
+                ? ['required', 'regex:/^(?:\+?88|88)?01[3-9]\d{8}$/']
+                : ['nullable', 'regex:/^(?:\+?88|88)?01[3-9]\d{8}$/'],
             'occupation'    => 'nullable|string|max:100',
             'city'          => 'nullable|string|max:100',
             'address'       => 'nullable|string|max:500',
 
             // Staff-specific fields
-            'staff_role'     => 'nullable|in:teacher,assistant,admin,therapist',
+            'staff_role'     => [
+                'nullable',
+                'in:teacher,assistant,admin,therapist',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->input('role') === 'staff') {
+                        $dept = $request->input('department', 'daycare');
+                        if ($dept === 'daycare' && $value === 'therapist') {
+                            $fail('Staff in the Daycare department cannot have the Therapist role.');
+                        }
+                        if ($dept === 'therapy' && $value === 'teacher') {
+                            $fail('Staff in the Therapy department cannot have the Teacher role.');
+                        }
+                    }
+                },
+            ],
             'department'     => 'nullable|in:daycare,therapy',
             'specialization' => 'nullable|in:slt,aba,ot',
             'nid'            => 'nullable|string|max:50',
@@ -100,6 +123,9 @@ class UserController extends Controller
 
             // Profile Image
             'image'         => 'nullable|image|max:2048',
+        ], [
+            'mobile.required' => 'The mobile number is required.',
+            'mobile.regex'    => 'Please enter a valid Bangladeshi mobile number (e.g. 017xxxxxxxx, 018xxxxxxxx, 019xxxxxxxx).',
         ]);
 
         $imagePath = null;
@@ -135,6 +161,7 @@ class UserController extends Controller
                 $user->staffProfile()->create([
                     'first_name'     => trim($validated['first_name']),
                     'last_name'      => trim($validated['last_name']),
+                    'mobile'         => $validated['mobile'],
                     'role'           => $validated['staff_role'] ?? 'teacher',
                     'department'     => $validated['department'] ?? 'daycare',
                     'specialization' => ($validated['department'] ?? '') === 'therapy' ? ($validated['specialization'] ?? null) : null,
@@ -149,6 +176,7 @@ class UserController extends Controller
                 $user->staffProfile()->create([
                     'first_name'    => trim($validated['first_name']),
                     'last_name'     => trim($validated['last_name']),
+                    'mobile'        => $validated['mobile'] ?? null,
                     'role'          => 'admin',
                     'nid'           => $validated['nid'] ?? null,
                     'date_of_birth' => $validated['date_of_birth'] ?? null,
@@ -183,6 +211,12 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        if ($request->filled('mobile')) {
+            $request->merge([
+                'mobile' => preg_replace('/[\s\-]/', '', (string)$request->input('mobile'))
+            ]);
+        }
+
         $validated = $request->validate([
             'email'         => 'required|email|max:255|unique:users,email,' . $user->id,
             'password'      => ['nullable', 'confirmed', Password::min(8)],
@@ -191,14 +225,30 @@ class UserController extends Controller
             'last_name'     => 'required|string|max:100',
             'is_active'     => 'nullable|boolean',
 
-            // Parent-specific fields
-            'mobile'        => 'nullable|string|max:30',
+            // Profile fields
+            'mobile'        => in_array($request->input('role'), ['parent', 'staff'])
+                ? ['required', 'regex:/^(?:\+?88|88)?01[3-9]\d{8}$/']
+                : ['nullable', 'regex:/^(?:\+?88|88)?01[3-9]\d{8}$/'],
             'occupation'    => 'nullable|string|max:100',
             'city'          => 'nullable|string|max:100',
             'address'       => 'nullable|string|max:500',
 
             // Staff-specific fields
-            'staff_role'     => 'nullable|in:teacher,assistant,admin,therapist',
+            'staff_role'     => [
+                'nullable',
+                'in:teacher,assistant,admin,therapist',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->input('role') === 'staff') {
+                        $dept = $request->input('department', 'daycare');
+                        if ($dept === 'daycare' && $value === 'therapist') {
+                            $fail('Staff in the Daycare department cannot have the Therapist role.');
+                        }
+                        if ($dept === 'therapy' && $value === 'teacher') {
+                            $fail('Staff in the Therapy department cannot have the Teacher role.');
+                        }
+                    }
+                },
+            ],
             'department'     => 'nullable|in:daycare,therapy',
             'specialization' => 'nullable|in:slt,aba,ot',
             'nid'            => 'nullable|string|max:50',
@@ -208,6 +258,9 @@ class UserController extends Controller
 
             // Profile Image
             'image'         => 'nullable|image|max:2048',
+        ], [
+            'mobile.required' => 'The mobile number is required.',
+            'mobile.regex'    => 'Please enter a valid Bangladeshi mobile number (e.g. 017xxxxxxxx, 018xxxxxxxx, 019xxxxxxxx).',
         ]);
 
         $imagePath = $user->profile?->image;
@@ -238,6 +291,7 @@ class UserController extends Controller
             $profileData = [
                 'first_name' => trim($validated['first_name']),
                 'last_name'  => trim($validated['last_name']),
+                'mobile'     => $validated['mobile'] ?? null,
                 'image'      => $imagePath,
             ];
 
@@ -296,9 +350,15 @@ class UserController extends Controller
             return back()->with('error', 'You cannot deactivate your own account.');
         }
 
-        $user->update(['is_active' => !$user->is_active]);
+        $newStatus = !$user->is_active;
+        DB::transaction(function () use ($user, $newStatus) {
+            $user->update(['is_active' => $newStatus]);
+            if ($user->staffProfile) {
+                $user->staffProfile->update(['is_active' => $newStatus]);
+            }
+        });
 
-        $status = $user->is_active ? 'activated' : 'deactivated';
+        $status = $newStatus ? 'activated' : 'deactivated';
         return back()->with('success', "User {$user->email} has been {$status}.");
     }
 

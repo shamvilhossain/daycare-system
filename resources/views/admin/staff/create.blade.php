@@ -138,6 +138,11 @@
                                                 @error('last_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                             </div>
                                             <div class="col-md-6">
+                                                <label class="form-label fw-semibold">Mobile Number <span class="required-star">*</span></label>
+                                                <input type="text" name="mobile" class="form-control @error('mobile') is-invalid @enderror" value="{{ old('mobile') }}" placeholder="e.g. 017xxxxxxxx" required>
+                                                @error('mobile') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                            </div>
+                                            <div class="col-md-6">
                                                 <label class="form-label fw-semibold">National ID (NID)</label>
                                                 <input type="text" name="nid" class="form-control @error('nid') is-invalid @enderror" value="{{ old('nid') }}" placeholder="e.g. 9876543210">
                                                 @error('nid') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -158,23 +163,27 @@
                                             <i class="bi bi-briefcase-fill text-primary"></i> Role & Department Assignment
                                         </div>
                                         <div class="row g-3">
+                                            @php
+                                                $selectedDept = old('department', 'daycare');
+                                                $selectedRole = old('role', ($selectedDept === 'therapy' ? 'therapist' : 'teacher'));
+                                            @endphp
                                             <div class="col-md-6">
                                                 <label class="form-label fw-semibold">Department <span class="required-star">*</span></label>
                                                 <select name="department" id="department_select" class="form-select @error('department') is-invalid @enderror" required>
-                                                    <option value="daycare" {{ old('department', 'daycare') === 'daycare' ? 'selected' : '' }}>Daycare</option>
-                                                    <option value="therapy" {{ old('department') === 'therapy' ? 'selected' : '' }}>Therapy</option>
+                                                    <option value="daycare" {{ $selectedDept === 'daycare' ? 'selected' : '' }}>Daycare</option>
+                                                    <option value="therapy" {{ $selectedDept === 'therapy' ? 'selected' : '' }}>Therapy</option>
                                                 </select>
                                                 @error('department') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                                                <div class="form-text">Therapy staff specialize in child developmental therapy.</div>
+                                                <div class="form-text">Daycare staff cannot be Therapist; Therapy staff cannot be Teacher.</div>
                                             </div>
 
                                             <div class="col-md-6">
                                                 <label class="form-label fw-semibold">Staff Role <span class="required-star">*</span></label>
                                                 <select name="role" id="role_select" class="form-select @error('role') is-invalid @enderror" required>
-                                                    <option value="teacher" {{ old('role') === 'teacher' ? 'selected' : '' }}>Teacher</option>
-                                                    <option value="assistant" {{ old('role') === 'assistant' ? 'selected' : '' }}>Assistant</option>
-                                                    <option value="therapist" {{ old('role') === 'therapist' ? 'selected' : '' }}>Therapist</option>
-                                                    <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
+                                                    <option value="teacher" id="role_opt_teacher" {{ $selectedRole === 'teacher' ? 'selected' : '' }} {{ $selectedDept === 'therapy' ? 'disabled hidden' : '' }}>Teacher</option>
+                                                    <option value="assistant" id="role_opt_assistant" {{ $selectedRole === 'assistant' ? 'selected' : '' }}>Assistant</option>
+                                                    <option value="therapist" id="role_opt_therapist" {{ $selectedRole === 'therapist' ? 'selected' : '' }} {{ $selectedDept === 'daycare' ? 'disabled hidden' : '' }}>Therapist</option>
+                                                    <option value="admin" id="role_opt_admin" {{ $selectedRole === 'admin' ? 'selected' : '' }}>Admin</option>
                                                 </select>
                                                 @error('role') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                             </div>
@@ -287,6 +296,8 @@
             const deptSelect = document.getElementById('department_select');
             const roleSelect = document.getElementById('role_select');
             const specContainer = document.getElementById('specialization_container');
+            const teacherOpt = document.getElementById('role_opt_teacher');
+            const therapistOpt = document.getElementById('role_opt_therapist');
 
             function checkSpecializationVisibility() {
                 if (deptSelect.value === 'therapy' || roleSelect.value === 'therapist') {
@@ -296,23 +307,53 @@
                 }
             }
 
-            deptSelect.addEventListener('change', function() {
-                if (this.value === 'therapy' && roleSelect.value !== 'therapist') {
-                    roleSelect.value = 'therapist';
-                } else if (this.value === 'daycare' && roleSelect.value === 'therapist') {
-                    roleSelect.value = 'teacher';
+            function syncDepartmentAndRole() {
+                const dept = deptSelect.value;
+
+                if (dept === 'daycare') {
+                    // Daycare cannot have Therapist
+                    if (therapistOpt) {
+                        therapistOpt.disabled = true;
+                        therapistOpt.hidden = true;
+                    }
+                    if (teacherOpt) {
+                        teacherOpt.disabled = false;
+                        teacherOpt.hidden = false;
+                    }
+                    if (roleSelect.value === 'therapist') {
+                        roleSelect.value = 'teacher';
+                    }
+                } else if (dept === 'therapy') {
+                    // Therapy cannot have Teacher
+                    if (teacherOpt) {
+                        teacherOpt.disabled = true;
+                        teacherOpt.hidden = true;
+                    }
+                    if (therapistOpt) {
+                        therapistOpt.disabled = false;
+                        therapistOpt.hidden = false;
+                    }
+                    if (roleSelect.value === 'teacher') {
+                        roleSelect.value = 'therapist';
+                    }
                 }
                 checkSpecializationVisibility();
+            }
+
+            deptSelect.addEventListener('change', function() {
+                syncDepartmentAndRole();
             });
 
             roleSelect.addEventListener('change', function() {
-                if (this.value === 'therapist') {
+                if (this.value === 'therapist' && deptSelect.value !== 'therapy') {
                     deptSelect.value = 'therapy';
+                } else if (this.value === 'teacher' && deptSelect.value !== 'daycare') {
+                    deptSelect.value = 'daycare';
                 }
-                checkSpecializationVisibility();
+                syncDepartmentAndRole();
             });
 
-            checkSpecializationVisibility();
+            syncDepartmentAndRole();
         });
     </script>
 </body>
