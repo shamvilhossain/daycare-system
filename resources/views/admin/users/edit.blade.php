@@ -365,6 +365,7 @@
                                                 @php
                                                     $userStaffDept = old('department', $user->staffProfile?->department ?? 'daycare');
                                                     $userStaffRole = old('staff_role', $user->staffProfile?->role ?? 'teacher');
+                                                    $userStaffSpec = old('specialization', $user->staffProfile?->specialization);
                                                 @endphp
                                                 <div class="col-12 col-sm-6">
                                                     <label for="user_staff_department" class="form-label">Department</label>
@@ -387,6 +388,19 @@
                                                     @error('staff_role')
                                                         <div class="invalid-feedback">{{ $message }}</div>
                                                     @enderror
+                                                </div>
+                                                <div class="col-12 col-sm-6" id="specialization_container" style="display: {{ $userStaffDept === 'therapy' || $userStaffRole === 'therapist' ? 'block' : 'none' }};">
+                                                    <label for="staff_specialization" class="form-label">Therapy Specialization</label>
+                                                    <select class="form-select @error('specialization') is-invalid @enderror" id="staff_specialization" name="specialization">
+                                                        <option value="">-- Select Specialization --</option>
+                                                        <option value="slt" {{ $userStaffSpec === 'slt' ? 'selected' : '' }}>Speech & Language Therapy (SLT)</option>
+                                                        <option value="aba" {{ $userStaffSpec === 'aba' ? 'selected' : '' }}>Applied Behavior Analysis (ABA)</option>
+                                                        <option value="ot" {{ $userStaffSpec === 'ot' ? 'selected' : '' }}>Occupational Therapy (OT)</option>
+                                                    </select>
+                                                    @error('specialization')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                    <div class="form-text text-muted small">Relevant when staff belongs to Therapy department.</div>
                                                 </div>
                                                 <div class="col-12 col-sm-6">
                                                     <label for="staff_nid" class="form-label">National ID (NID)</label>
@@ -486,6 +500,7 @@
                 staffCard.classList.add('selected-staff');
                 staffSection.style.display = 'block';
                 toggleInputs(staffSection, true);
+                syncUserStaffDeptAndRole();
             } else if (role === 'admin') {
                 adminCard.classList.add('selected-admin');
                 adminSection.style.display = 'block';
@@ -502,6 +517,7 @@
         function syncUserStaffDeptAndRole() {
             const deptSelect = document.getElementById('user_staff_department');
             const roleSelect = document.getElementById('staff_role');
+            const specContainer = document.getElementById('specialization_container');
             if (!deptSelect || !roleSelect) return;
 
             const teacherOpt = document.getElementById('user_role_opt_teacher');
@@ -530,6 +546,16 @@
                 }
                 if (roleSelect.value === 'teacher') {
                     roleSelect.value = 'therapist';
+                }
+            }
+
+            if (specContainer) {
+                if (deptSelect.value === 'therapy' || roleSelect.value === 'therapist') {
+                    specContainer.style.display = 'block';
+                } else {
+                    specContainer.style.display = 'none';
+                    const specSelect = document.getElementById('staff_specialization');
+                    if (specSelect) specSelect.value = '';
                 }
             }
         }

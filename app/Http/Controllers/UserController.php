@@ -164,7 +164,7 @@ class UserController extends Controller
                     'mobile'         => $validated['mobile'],
                     'role'           => $validated['staff_role'] ?? 'teacher',
                     'department'     => $validated['department'] ?? 'daycare',
-                    'specialization' => ($validated['department'] ?? '') === 'therapy' ? ($validated['specialization'] ?? null) : null,
+                    'specialization' => (($validated['department'] ?? '') === 'therapy' && !empty($validated['specialization'])) ? $validated['specialization'] : null,
                     'nid'            => $validated['nid'] ?? null,
                     'date_of_birth'  => $validated['date_of_birth'] ?? null,
                     'hire_date'      => $validated['hire_date'] ?? now()->toDateString(),
@@ -316,7 +316,7 @@ class UserController extends Controller
                 $profileData = array_merge($profileData, [
                     'role'           => $validated['role'] === 'admin' ? 'admin' : ($validated['staff_role'] ?? 'teacher'),
                     'department'     => $validated['department'] ?? 'daycare',
-                    'specialization' => ($validated['department'] ?? '') === 'therapy' ? ($validated['specialization'] ?? null) : null,
+                    'specialization' => (($validated['department'] ?? '') === 'therapy' && !empty($validated['specialization'])) ? $validated['specialization'] : null,
                     'nid'            => $validated['nid'] ?? null,
                     'date_of_birth'  => $validated['date_of_birth'] ?? null,
                     'hire_date'      => $validated['hire_date'] ?? null,

@@ -453,6 +453,9 @@
                                                             <div><i class="bi bi-phone text-muted me-1"></i> {{ $user->staffProfile->mobile }}</div>
                                                         @endif
                                                         <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ ucfirst($user->staffProfile->role ?? 'Staff') }}</span>
+                                                        @if($user->staffProfile->specialization)
+                                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle" title="{{ $user->staffProfile->specialization_label }}">{{ $user->staffProfile->specialization_short }}</span>
+                                                        @endif
                                                         @if($user->staffProfile->hire_date)
                                                             <span class="text-muted ms-1">Hired: {{ \Carbon\Carbon::parse($user->staffProfile->hire_date)->format('M Y') }}</span>
                                                         @endif
