@@ -89,9 +89,11 @@
                             <p>Child Profile &bull; Lost Child Safety QR Tag Management</p>
                         </div>
                         <div class="d-flex gap-2">
+                            @unless(auth()->user()->hasRole('parent'))
                             <a href="{{ route('admin.children.edit', $child) }}" class="btn btn-sm btn-light fw-semibold text-primary">
                                 <i class="bi bi-pencil-square me-1"></i> Edit Child
                             </a>
+                            @endunless
                             <a href="{{ route('admin.children.index') }}" class="btn btn-sm btn-outline-light">
                                 <i class="bi bi-arrow-left me-1"></i> Back to List
                             </a>
@@ -235,7 +237,8 @@
                                         Generate a water-resistant QR safety tag for this child’s backpack, jacket, or wristband. When scanned by anyone with a smartphone, it displays a mobile-friendly emergency card with a one-tap <strong>Call Guardian</strong> button and GPS location sharing.
                                     </p>
 
-                                    {{-- Generation Form --}}
+                                    {{-- Generation Form (hidden for parents) --}}
+                                    @unless(auth()->user()->hasRole('parent'))
                                     <form action="{{ route('admin.children.generate-safety-tag', $child) }}" method="POST" class="row g-2 align-items-end mb-4 bg-light p-3 rounded-3 border">
                                         @csrf
                                         <div class="col-md-7">
@@ -248,6 +251,7 @@
                                             </button>
                                         </div>
                                     </form>
+                                    @endunless
 
                                     {{-- Existing Tags List --}}
                                     <h6 class="fw-bold text-secondary mb-3 small text-uppercase">Existing Safety Tags ({{ $child->safetyTags->count() }})</h6>
@@ -292,6 +296,7 @@
                                                         </a>
 
                                                         @if ($tag->is_active)
+                                                            @unless(auth()->user()->hasRole('parent'))
                                                             <form action="{{ route('admin.children.deactivate-safety-tag', $tag) }}" method="POST" onsubmit="return confirm('Are you sure you want to deactivate this safety tag? The public QR code will stop functioning.');" class="d-inline">
                                                                 @csrf
                                                                 @method('PATCH')
@@ -299,6 +304,7 @@
                                                                     <i class="bi bi-slash-circle me-1"></i> Deactivate
                                                                 </button>
                                                             </form>
+                                                            @endunless
                                                         @endif
                                                     </div>
 

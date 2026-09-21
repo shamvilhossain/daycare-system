@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\ScopesForParent;
 use App\Models\Invoice;
 use App\Models\Child;
 use App\Models\TherapySession;
 use App\Models\ParentProfile;
 use App\Services\InvoiceService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class InvoiceController extends Controller
 {
+    use ScopesForParent;
+
     protected InvoiceService $invoiceService;
 
     public function __construct(InvoiceService $invoiceService)
@@ -24,6 +28,12 @@ class InvoiceController extends Controller
     public function index(Request $request)
     {
         $query = Invoice::with(['parent', 'child']);
+
+        // Scope to parent's own invoices
+        $parentProfileId = $this->getParentProfileId();
+        if ($parentProfileId !== null) {
+            $query->where('parent_id', $parentProfileId);
+        }
 
         // Search by parent name, child name, or invoice number
         if ($search = $request->input('search')) {
@@ -53,13 +63,17 @@ class InvoiceController extends Controller
             $query->whereDate('invoice_date', '<=', $to);
         }
 
-        // Statistics
+        // Statistics (scoped for parents)
+        $statsQuery = Invoice::query();
+        if ($parentProfileId !== null) {
+            $statsQuery->where('parent_id', $parentProfileId);
+        }
         $stats = [
-            'total'     => Invoice::count(),
-            'draft'     => Invoice::where('status', 'draft')->count(),
-            'paid'      => Invoice::where('status', 'paid')->count(),
-            'overdue'   => Invoice::where('status', 'overdue')->count(),
-            'cancelled' => Invoice::where('status', 'cancelled')->count(),
+            'total'     => (clone $statsQuery)->count(),
+            'draft'     => (clone $statsQuery)->where('status', 'draft')->count(),
+            'paid'      => (clone $statsQuery)->where('status', 'paid')->count(),
+            'overdue'   => (clone $statsQuery)->where('status', 'overdue')->count(),
+            'cancelled' => (clone $statsQuery)->where('status', 'cancelled')->count(),
         ];
 
         $invoices = $query->orderBy('created_at', 'desc')->paginate(15)->appends($request->query());
@@ -72,6 +86,10 @@ class InvoiceController extends Controller
      */
     public function create()
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $parents = ParentProfile::orderBy('first_name')->get();
         return view('admin.invoices.create', compact('parents'));
     }
@@ -81,6 +99,10 @@ class InvoiceController extends Controller
      */
     public function store(Request $request)
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'parent_id'              => 'required|exists:parents,id',
             'child_id'               => 'required|exists:children,id',
@@ -109,6 +131,12 @@ class InvoiceController extends Controller
      */
     public function show(Invoice $invoice)
     {
+        // Parents can only view their own invoices
+        $parentProfileId = $this->getParentProfileId();
+        if ($parentProfileId !== null && $invoice->parent_id !== $parentProfileId) {
+            abort(403, 'You do not have access to this invoice.');
+        }
+
         $invoice->load(['parent', 'child', 'items', 'payments.receivedBy']);
         return view('admin.invoices.show', compact('invoice'));
     }
@@ -118,6 +146,10 @@ class InvoiceController extends Controller
      */
     public function addPayment(Request $request, Invoice $invoice)
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'paid_amount'     => 'required|numeric|min:0.01',
             'payment_method'  => 'required|in:cash,card,bank_transfer,online',
@@ -138,6 +170,10 @@ class InvoiceController extends Controller
      */
     public function cancel(Invoice $invoice)
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $this->invoiceService->cancelInvoice($invoice);
 
         return redirect()->route('admin.invoices.show', $invoice)
@@ -149,6 +185,10 @@ class InvoiceController extends Controller
      */
     public function destroy(Invoice $invoice)
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $invoice->delete();
 
         return redirect()->route('admin.invoices.index')

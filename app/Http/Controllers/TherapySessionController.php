@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\ScopesForParent;
 use App\Models\Child;
 use App\Models\Staff;
 use App\Models\TherapyService;
 use App\Models\TherapySession;
 use App\Services\TherapySessionService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TherapySessionController extends Controller
 {
+    use ScopesForParent;
+
     protected TherapySessionService $sessionService;
 
     public function __construct(TherapySessionService $sessionService)
@@ -24,6 +28,12 @@ class TherapySessionController extends Controller
     public function index(Request $request)
     {
         $query = TherapySession::with(['child', 'therapist', 'service', 'bookedBy']);
+
+        // Scope to parent's own children
+        $parentChildIds = $this->getParentChildIds();
+        if ($parentChildIds !== null) {
+            $query->whereIn('child_id', $parentChildIds);
+        }
 
         // Search by child name or therapist name
         if ($search = $request->input('search')) {
@@ -60,13 +70,17 @@ class TherapySessionController extends Controller
             $query->where('session_date', $date);
         }
 
-        // Statistics
+        // Statistics (scoped for parents)
+        $statsQuery = TherapySession::query();
+        if ($parentChildIds !== null) {
+            $statsQuery->whereIn('child_id', $parentChildIds);
+        }
         $stats = [
-            'total'     => TherapySession::count(),
-            'scheduled' => TherapySession::where('status', 'scheduled')->count(),
-            'completed' => TherapySession::where('status', 'completed')->count(),
-            'cancelled' => TherapySession::where('status', 'cancelled')->count(),
-            'no_show'   => TherapySession::where('status', 'no_show')->count(),
+            'total'     => (clone $statsQuery)->count(),
+            'scheduled' => (clone $statsQuery)->where('status', 'scheduled')->count(),
+            'completed' => (clone $statsQuery)->where('status', 'completed')->count(),
+            'cancelled' => (clone $statsQuery)->where('status', 'cancelled')->count(),
+            'no_show'   => (clone $statsQuery)->where('status', 'no_show')->count(),
         ];
 
         $therapists = Staff::where('role', 'therapist')->where('is_active', true)->orderBy('first_name')->get();
@@ -80,6 +94,10 @@ class TherapySessionController extends Controller
      */
     public function create()
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $children = Child::where('is_active', true)->orderBy('first_name')->get();
         $therapists = Staff::where('role', 'therapist')->where('is_active', true)->orderBy('first_name')->get();
         $services = TherapyService::where('is_active', true)->orderBy('name')->get();
@@ -92,6 +110,10 @@ class TherapySessionController extends Controller
      */
     public function store(Request $request)
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'child_id'           => 'required|exists:children,id',
             'staff_id'           => 'required|exists:staff,id',
@@ -132,6 +154,8 @@ class TherapySessionController extends Controller
      */
     public function show(TherapySession $therapySession)
     {
+        $this->authorizeParentAccessToChildRecord($therapySession);
+
         $therapySession->load(['child', 'therapist', 'service', 'bookedBy']);
         return view('admin.therapy-sessions.show', compact('therapySession'));
     }
@@ -141,6 +165,10 @@ class TherapySessionController extends Controller
      */
     public function edit(TherapySession $therapySession)
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $therapySession->load(['child', 'therapist', 'service']);
         $children = Child::where('is_active', true)->orderBy('first_name')->get();
         $therapists = Staff::where('role', 'therapist')->where('is_active', true)->orderBy('first_name')->get();
@@ -154,6 +182,10 @@ class TherapySessionController extends Controller
      */
     public function update(Request $request, TherapySession $therapySession)
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'child_id'           => 'required|exists:children,id',
             'staff_id'           => 'required|exists:staff,id',
@@ -194,6 +226,10 @@ class TherapySessionController extends Controller
      */
     public function destroy(TherapySession $therapySession)
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $therapySession->delete();
 
         return redirect()->route('admin.therapy-sessions.index')
@@ -205,6 +241,10 @@ class TherapySessionController extends Controller
      */
     public function updateStatus(Request $request, TherapySession $therapySession)
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'status' => 'required|in:scheduled,completed,cancelled,no_show',
         ]);

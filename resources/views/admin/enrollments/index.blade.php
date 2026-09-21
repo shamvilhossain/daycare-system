@@ -75,11 +75,17 @@
                     <div class="page-banner d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div>
                             <h2><i class="bi bi-clipboard-check-fill me-2"></i>Enrollments</h2>
-                            <p>Manage program enrollments, capacity checks, age eligibility, and approval statuses</p>
+                            @if(auth()->user()->hasRole('parent'))
+                                <p>View your children's program enrollments and statuses</p>
+                            @else
+                                <p>Manage program enrollments, capacity checks, age eligibility, and approval statuses</p>
+                            @endif
                         </div>
+                        @unless(auth()->user()->hasRole('parent'))
                         <a href="{{ route('admin.enrollments.create') }}" class="btn btn-light btn-sm fw-bold shadow-sm px-3" style="position:relative;z-index:1;">
                             <i class="bi bi-plus-lg me-1"></i> New Enrollment
                         </a>
+                        @endunless
                     </div>
                 </div>
             </div>
@@ -268,6 +274,7 @@
                                                 </td>
                                                 <td class="text-end">
                                                     <div class="btn-group btn-group-sm">
+                                                        @unless(auth()->user()->hasRole('parent'))
                                                         {{-- Quick Approve / Reject for Pending --}}
                                                         @if($enrollment->status === 'pending')
                                                             <form action="{{ route('admin.enrollments.approve', $enrollment) }}" method="POST" class="d-inline">
@@ -280,10 +287,12 @@
                                                                 <i class="bi bi-x-lg"></i>
                                                             </button>
                                                         @endif
+                                                        @endunless
 
                                                         <a href="{{ route('admin.enrollments.show', $enrollment) }}" class="btn btn-sm btn-outline-info" title="View Details">
                                                             <i class="bi bi-eye"></i>
                                                         </a>
+                                                        @unless(auth()->user()->hasRole('parent'))
                                                         <a href="{{ route('admin.enrollments.edit', $enrollment) }}" class="btn btn-sm btn-outline-primary" title="Edit">
                                                             <i class="bi bi-pencil"></i>
                                                         </a>
@@ -293,6 +302,7 @@
                                                                 <i class="bi bi-trash"></i>
                                                             </button>
                                                         </form>
+                                                        @endunless
                                                     </div>
                                                 </td>
                                             </tr>

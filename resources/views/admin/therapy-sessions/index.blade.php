@@ -74,11 +74,17 @@
                     <div class="page-banner d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div>
                             <h2><i class="bi bi-heart-pulse-fill me-2"></i>Therapy Sessions</h2>
-                            <p>Schedule and manage therapy sessions with overlap detection and specialization matching</p>
+                            @if(auth()->user()->hasRole('parent'))
+                                <p>View your children's therapy session schedules and history</p>
+                            @else
+                                <p>Schedule and manage therapy sessions with overlap detection and specialization matching</p>
+                            @endif
                         </div>
+                        @unless(auth()->user()->hasRole('parent'))
                         <a href="{{ route('admin.therapy-sessions.create') }}" class="btn btn-light btn-sm fw-bold shadow-sm px-3" style="position:relative;z-index:1;">
                             <i class="bi bi-plus-lg me-1"></i> New Session
                         </a>
+                        @endunless
                     </div>
                 </div>
             </div>
@@ -272,6 +278,7 @@
                                                 </td>
                                                 <td class="text-end">
                                                     <div class="btn-group btn-group-sm">
+                                                        @unless(auth()->user()->hasRole('parent'))
                                                         {{-- Quick status buttons for scheduled sessions --}}
                                                         @if($session->status === 'scheduled')
                                                             <form action="{{ route('admin.therapy-sessions.update-status', $session) }}" method="POST" class="d-inline">
@@ -289,9 +296,11 @@
                                                                 </button>
                                                             </form>
                                                         @endif
+                                                        @endunless
                                                         <a href="{{ route('admin.therapy-sessions.show', $session) }}" class="btn btn-sm btn-outline-info" title="View Details">
                                                             <i class="bi bi-eye"></i>
                                                         </a>
+                                                        @unless(auth()->user()->hasRole('parent'))
                                                         <a href="{{ route('admin.therapy-sessions.edit', $session) }}" class="btn btn-sm btn-outline-primary" title="Edit">
                                                             <i class="bi bi-pencil"></i>
                                                         </a>
@@ -301,6 +310,7 @@
                                                                 <i class="bi bi-trash"></i>
                                                             </button>
                                                         </form>
+                                                        @endunless
                                                     </div>
                                                 </td>
                                             </tr>

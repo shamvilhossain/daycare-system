@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\ScopesForParent;
 use App\Models\Child;
 use App\Models\ChildSafetyTag;
 use App\Models\Document;
@@ -9,14 +10,23 @@ use App\Models\ParentProfile;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class ChildController extends Controller
 {
+    use ScopesForParent;
+
     public function index(Request $request)
     {
         $query = Child::query();
+
+        // Scope to parent's own children
+        $parentChildIds = $this->getParentChildIds();
+        if ($parentChildIds !== null) {
+            $query->whereIn('id', $parentChildIds);
+        }
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
@@ -37,12 +47,22 @@ class ChildController extends Controller
 
     public function create()
     {
+        // Parents cannot create children
+        if (Auth::user()->hasRole('parent')) {
+            abort(403);
+        }
+
         $parents = ParentProfile::orderBy('first_name')->get();
         return view('admin.children.create', compact('parents'));
     }
 
     public function store(Request $request)
     {
+        // Parents cannot create children
+        if (Auth::user()->hasRole('parent')) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'first_name'             => 'required|string|max:255',
             'last_name'              => 'required|string|max:255',
@@ -132,6 +152,11 @@ class ChildController extends Controller
 
     public function edit(Child $child)
     {
+        // Parents cannot edit children
+        if (Auth::user()->hasRole('parent')) {
+            abort(403);
+        }
+
         $child->load(['parents', 'documents']);
         $parents = ParentProfile::orderBy('first_name')->get();
         return view('admin.children.edit', compact('child', 'parents'));
@@ -139,6 +164,11 @@ class ChildController extends Controller
 
     public function update(Request $request, Child $child)
     {
+        // Parents cannot update children
+        if (Auth::user()->hasRole('parent')) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'first_name'             => 'required|string|max:255',
             'last_name'              => 'required|string|max:255',
@@ -233,6 +263,11 @@ class ChildController extends Controller
 
     public function destroy(Child $child)
     {
+        // Parents cannot delete children
+        if (Auth::user()->hasRole('parent')) {
+            abort(403);
+        }
+
         DB::transaction(function () use ($child) {
             if ($child->photo_url && Storage::disk('public')->exists($child->photo_url)) {
                 Storage::disk('public')->delete($child->photo_url);
@@ -252,6 +287,14 @@ class ChildController extends Controller
 
     public function downloadDocument(Document $document)
     {
+        // If parent, verify this document belongs to one of their children
+        if ($document->child_id) {
+            $childIds = $this->getParentChildIds();
+            if ($childIds !== null && !in_array($document->child_id, $childIds)) {
+                abort(403, 'You do not have access to this document.');
+            }
+        }
+
         $filePath = $document->file_url;
         if (Storage::disk('public')->exists($filePath)) {
             $ext = pathinfo($filePath, PATHINFO_EXTENSION);
@@ -282,6 +325,9 @@ class ChildController extends Controller
 
     public function show(Child $child)
     {
+        // Verify parent can access this child
+        $this->authorizeParentAccessToChild($child);
+
         $child->load([
             'parents',
             'documents',
@@ -294,6 +340,11 @@ class ChildController extends Controller
 
     public function generateSafetyTag(Request $request, Child $child)
     {
+        // Parents cannot generate safety tags
+        if (Auth::user()->hasRole('parent')) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'label' => 'nullable|string|max:100',
         ]);
@@ -329,6 +380,11 @@ class ChildController extends Controller
 
     public function deactivateSafetyTag(ChildSafetyTag $tag)
     {
+        // Parents cannot deactivate safety tags
+        if (Auth::user()->hasRole('parent')) {
+            abort(403);
+        }
+
         $tag->update(['is_active' => false]);
 
         if ($tag->qr_path && Storage::disk('public')->exists($tag->qr_path)) {

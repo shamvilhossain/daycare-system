@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\ScopesForParent;
 use App\Http\Requests\Attendance\BulkAttendanceRequest;
 use App\Http\Requests\Attendance\CheckInRequest;
 use App\Http\Requests\Attendance\StoreAttendanceRequest;
@@ -14,10 +15,13 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class AttendanceController extends Controller
 {
+    use ScopesForParent;
+
     protected AttendanceService $attendanceService;
 
     public function __construct(AttendanceService $attendanceService)
@@ -39,6 +43,15 @@ class AttendanceController extends Controller
         $roster = $this->attendanceService->getRoster($date, $programId, $search, $statusFilter);
         $stats = $this->attendanceService->getStats($date, $programId);
         $allChildren = Child::where('is_active', true)->orderBy('first_name')->get();
+
+        // Scope roster and allChildren for parent users
+        $parentChildIds = $this->getParentChildIds();
+        if ($parentChildIds !== null) {
+            $roster = array_values(array_filter($roster, function ($item) use ($parentChildIds) {
+                return in_array($item['child']->id, $parentChildIds);
+            }));
+            $allChildren = $allChildren->filter(fn($c) => in_array($c->id, $parentChildIds))->values();
+        }
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -66,6 +79,10 @@ class AttendanceController extends Controller
      */
     public function checkIn(CheckInRequest $request): RedirectResponse|JsonResponse
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $attendance = $this->attendanceService->checkIn($request->validated(), $request->user());
 
         if ($request->wantsJson()) {
@@ -84,6 +101,10 @@ class AttendanceController extends Controller
      */
     public function checkOut(Request $request, Attendance $attendance): RedirectResponse|JsonResponse
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $request->validate([
             'check_out_time' => 'nullable|date_format:H:i,H:i:s',
             'notes'          => 'nullable|string|max:500',
@@ -111,6 +132,10 @@ class AttendanceController extends Controller
      */
     public function markAbsent(Request $request): RedirectResponse|JsonResponse
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'child_id'        => 'required|exists:children,id',
             'program_id'      => 'required|exists:programs,id',
@@ -145,6 +170,10 @@ class AttendanceController extends Controller
      */
     public function store(StoreAttendanceRequest $request): RedirectResponse
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $attendance = $this->attendanceService->createOrUpdate($request->validated());
 
         return back()->with('success', "Attendance record saved for {$attendance->child->full_name}.");
@@ -155,6 +184,10 @@ class AttendanceController extends Controller
      */
     public function update(UpdateAttendanceRequest $request, Attendance $attendance): RedirectResponse
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $attendance->update($request->validated());
 
         return back()->with('success', "Attendance updated for {$attendance->child->full_name}.");
@@ -165,6 +198,10 @@ class AttendanceController extends Controller
      */
     public function destroy(Attendance $attendance): RedirectResponse
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $childName = $attendance->child ? $attendance->child->full_name : 'child';
         $attendance->delete();
 
@@ -176,6 +213,10 @@ class AttendanceController extends Controller
      */
     public function bulk(BulkAttendanceRequest $request): RedirectResponse
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $validated = $request->validated();
         $action = $validated['action'];
         $date = $validated['attendance_date'];

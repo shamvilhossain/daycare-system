@@ -126,9 +126,14 @@ class ChildDailyLogService
     /**
      * Query paginated daily logs across all children with filters.
      */
-    public function getPaginatedLogs(Request $request): LengthAwarePaginator
+    public function getPaginatedLogs(Request $request, ?array $parentChildIds = null): LengthAwarePaginator
     {
         $query = ChildDailyLog::with(['child', 'staff.user', 'activityOccurrence.activity']);
+
+        // Scope to parent's children if applicable
+        if ($parentChildIds !== null) {
+            $query->whereIn('child_id', $parentChildIds);
+        }
 
         if ($date = $request->input('date')) {
             $query->whereDate('log_date', $date);

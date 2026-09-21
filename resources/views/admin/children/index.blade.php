@@ -67,11 +67,17 @@
                     <div class="page-banner d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div>
                             <h2><i class="bi bi-people-fill me-2"></i>Children</h2>
-                            <p>Manage enrolled children, their parents, emergency contacts, and documents</p>
+                            @if(auth()->user()->hasRole('parent'))
+                                <p>View your children's profiles, safety information, and documents</p>
+                            @else
+                                <p>Manage enrolled children, their parents, emergency contacts, and documents</p>
+                            @endif
                         </div>
+                        @unless(auth()->user()->hasRole('parent'))
                         <a href="{{ route('admin.children.create') }}" class="btn btn-light btn-sm fw-bold shadow-sm px-3" style="position:relative;z-index:1;">
                             <i class="bi bi-plus-lg me-1"></i> Add Child
                         </a>
+                        @endunless
                     </div>
                 </div>
             </div>
@@ -160,11 +166,13 @@
                                             </td>
                                             <td class="text-end">
                                                 <a href="{{ route('admin.children.show', $child) }}" class="btn btn-sm btn-outline-success" title="View Profile & Safety QR Tags"><i class="bi bi-qr-code-scan"></i></a>
+                                                @unless(auth()->user()->hasRole('parent'))
                                                 <a href="{{ route('admin.children.edit', $child) }}" class="btn btn-sm btn-outline-primary" title="Edit Child & Documents"><i class="bi bi-pencil"></i></a>
                                                 <form action="{{ route('admin.children.destroy', $child) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Delete this child and all associated documents?');">
                                                     @csrf @method('DELETE')
                                                     <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Child"><i class="bi bi-trash"></i></button>
                                                 </form>
+                                                @endunless
                                             </td>
                                         </tr>
                                     @empty

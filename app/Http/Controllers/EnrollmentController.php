@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\ScopesForParent;
 use App\Models\Child;
 use App\Models\Enrollment;
 use App\Models\Program;
 use App\Services\EnrollmentService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class EnrollmentController extends Controller
 {
+    use ScopesForParent;
+
     protected EnrollmentService $enrollmentService;
 
     public function __construct(EnrollmentService $enrollmentService)
@@ -24,6 +28,12 @@ class EnrollmentController extends Controller
     public function index(Request $request)
     {
         $query = Enrollment::with(['child', 'program', 'createdBy', 'approvedBy']);
+
+        // Scope to parent's own children
+        $parentChildIds = $this->getParentChildIds();
+        if ($parentChildIds !== null) {
+            $query->whereIn('child_id', $parentChildIds);
+        }
 
         // Search by child name or program name
         if ($search = $request->input('search')) {
@@ -52,13 +62,17 @@ class EnrollmentController extends Controller
             $query->where('child_id', $childId);
         }
 
-        // Statistics
+        // Statistics (scoped for parents)
+        $statsQuery = Enrollment::query();
+        if ($parentChildIds !== null) {
+            $statsQuery->whereIn('child_id', $parentChildIds);
+        }
         $stats = [
-            'total'     => Enrollment::count(),
-            'active'    => Enrollment::where('status', 'active')->count(),
-            'pending'   => Enrollment::where('status', 'pending')->count(),
-            'graduated' => Enrollment::where('status', 'graduated')->count(),
-            'withdrawn' => Enrollment::where('status', 'withdrawn')->count(),
+            'total'     => (clone $statsQuery)->count(),
+            'active'    => (clone $statsQuery)->where('status', 'active')->count(),
+            'pending'   => (clone $statsQuery)->where('status', 'pending')->count(),
+            'graduated' => (clone $statsQuery)->where('status', 'graduated')->count(),
+            'withdrawn' => (clone $statsQuery)->where('status', 'withdrawn')->count(),
         ];
 
         $programs = Program::orderBy('name')->get();
@@ -72,6 +86,10 @@ class EnrollmentController extends Controller
      */
     public function create(Request $request)
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $children = Child::where('is_active', true)->orderBy('first_name')->get();
         $programs = Program::where('is_active', true)->withCount(['enrollments as active_count' => function ($q) {
             $q->whereIn('status', ['active', 'pending']);
@@ -88,6 +106,10 @@ class EnrollmentController extends Controller
      */
     public function store(Request $request)
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'child_id'     => 'required|exists:children,id',
             'program_id'   => 'required|exists:programs,id',
@@ -109,6 +131,8 @@ class EnrollmentController extends Controller
      */
     public function show(Enrollment $enrollment)
     {
+        $this->authorizeParentAccessToChildRecord($enrollment);
+
         $enrollment->load(['child.parents', 'program', 'createdBy', 'approvedBy']);
         return view('admin.enrollments.show', compact('enrollment'));
     }
@@ -118,6 +142,10 @@ class EnrollmentController extends Controller
      */
     public function edit(Enrollment $enrollment)
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $enrollment->load(['child', 'program']);
         $children = Child::orderBy('first_name')->get();
         $programs = Program::withCount(['enrollments as active_count' => function ($q) {
@@ -132,6 +160,10 @@ class EnrollmentController extends Controller
      */
     public function update(Request $request, Enrollment $enrollment)
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'child_id'     => 'required|exists:children,id',
             'program_id'   => 'required|exists:programs,id',
@@ -153,6 +185,10 @@ class EnrollmentController extends Controller
      */
     public function destroy(Enrollment $enrollment)
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $enrollment->delete();
 
         return redirect()->route('admin.enrollments.index')
@@ -164,6 +200,10 @@ class EnrollmentController extends Controller
      */
     public function approve(Enrollment $enrollment)
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $this->enrollmentService->approve($enrollment, auth()->user());
 
         return back()->with('success', "Enrollment for {$enrollment->child->full_name} has been approved.");
@@ -174,6 +214,10 @@ class EnrollmentController extends Controller
      */
     public function reject(Request $request, Enrollment $enrollment)
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $reason = $request->input('reason');
         $this->enrollmentService->reject($enrollment, auth()->user(), $reason);
 
@@ -185,6 +229,10 @@ class EnrollmentController extends Controller
      */
     public function withdraw(Request $request, Enrollment $enrollment)
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $endDate = $request->input('end_date');
         $this->enrollmentService->withdraw($enrollment, $endDate);
 
@@ -196,6 +244,10 @@ class EnrollmentController extends Controller
      */
     public function graduate(Request $request, Enrollment $enrollment)
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $endDate = $request->input('end_date');
         $this->enrollmentService->graduate($enrollment, $endDate);
 

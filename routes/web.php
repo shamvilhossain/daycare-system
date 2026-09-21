@@ -53,9 +53,8 @@ Route::middleware('auth')->group(function () {
         return view('dashboard');
     })->name('dashboard');
 
-    // Daily Operations (Attendance, Child Daily Logs, Activity Sessions) - accessible by Admin & Staff
-    Route::middleware('role:admin|staff')->group(function () {
-        // Attendance Desk
+    // Attendance Desk
+    Route::middleware('role_or_permission:admin|attendance.view-any|attendance.view')->group(function () {
         Route::get('/admin/attendance', [AttendanceController::class, 'index'])->name('admin.attendance.index');
         Route::post('/admin/attendance', [AttendanceController::class, 'store'])->name('admin.attendance.store');
         Route::put('/admin/attendance/{attendance}', [AttendanceController::class, 'update'])->name('admin.attendance.update');
@@ -64,15 +63,19 @@ Route::middleware('auth')->group(function () {
         Route::post('/admin/attendance/{attendance}/check-out', [AttendanceController::class, 'checkOut'])->name('admin.attendance.check-out');
         Route::post('/admin/attendance/mark-absent', [AttendanceController::class, 'markAbsent'])->name('admin.attendance.mark-absent');
         Route::post('/admin/attendance/bulk', [AttendanceController::class, 'bulk'])->name('admin.attendance.bulk');
+    });
 
-        // Child Daily Logs
+    // Child Daily Logs
+    Route::middleware('role_or_permission:admin|child-daily-logs.view-any|child-daily-logs.view')->group(function () {
         Route::get('/admin/child-daily-logs', [ChildDailyLogController::class, 'index'])->name('admin.child-daily-logs.index');
         Route::get('/admin/child-daily-logs/child/{child}', [ChildDailyLogController::class, 'childDay'])->name('admin.child-daily-logs.child-day');
         Route::post('/admin/child-daily-logs', [ChildDailyLogController::class, 'store'])->name('admin.child-daily-logs.store');
         Route::put('/admin/child-daily-logs/{childDailyLog}', [ChildDailyLogController::class, 'update'])->name('admin.child-daily-logs.update');
         Route::delete('/admin/child-daily-logs/{childDailyLog}', [ChildDailyLogController::class, 'destroy'])->name('admin.child-daily-logs.destroy');
+    });
 
-        // Activity Occurrences (Scheduling, Sessions, & Observations)
+    // Activity Occurrences (Scheduling, Sessions, & Observations)
+    Route::middleware('role_or_permission:admin|activity-occurrences.view-any')->group(function () {
         Route::get('/admin/activity-occurrences', [ActivityOccurrenceController::class, 'index'])->name('admin.activity-occurrences.index');
         Route::get('/admin/activity-occurrences/create', [ActivityOccurrenceController::class, 'create'])->name('admin.activity-occurrences.create');
         Route::post('/admin/activity-occurrences', [ActivityOccurrenceController::class, 'store'])->name('admin.activity-occurrences.store');
@@ -83,13 +86,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/admin/activity-occurrences/{activityOccurrence}/media', [ActivityOccurrenceController::class, 'uploadMedia'])->name('admin.activity-occurrences.upload-media')->whereNumber('activityOccurrence');
         Route::delete('/admin/activity-occurrences/media/{activityMedia}', [ActivityOccurrenceController::class, 'destroyMedia'])->name('admin.activity-occurrences.destroy-media')->whereNumber('activityMedia');
         Route::delete('/admin/activity-occurrences/{activityOccurrence}', [ActivityOccurrenceController::class, 'destroy'])->name('admin.activity-occurrences.destroy')->whereNumber('activityOccurrence');
+    });
 
-        // Activities catalog index & view
+    // Activities catalog index & view
+    Route::middleware('role_or_permission:admin|activities.view-any')->group(function () {
         Route::get('/admin/activities', [ActivityController::class, 'index'])->name('admin.activities.index');
         Route::get('/admin/activities/{activity}', [ActivityController::class, 'show'])->name('admin.activities.show')->whereNumber('activity');
     });
 
-    // Admin-only management routes
+    // Admin-only management routes (Users & Accounts, Role Permissions, Activity Catalog CRUD)
     Route::middleware('role:admin')->group(function () {
         // User management
         Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users.index');
@@ -100,12 +105,11 @@ Route::middleware('auth')->group(function () {
         Route::patch('/admin/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('admin.users.toggle-status');
         Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
 
-        // Staff management
-        Route::patch('/admin/staff/{staff}/toggle-status', [StaffController::class, 'toggleStatus'])->name('admin.staff.toggle-status');
-        Route::resource('/admin/staff', StaffController::class, ['as' => 'admin']);
-
-        // Programs management
-        Route::resource('/admin/programs', ProgramController::class, ['as' => 'admin']);
+        // Role-Permission management
+        Route::get('/admin/role-permissions', [RolePermissionController::class, 'index'])->name('admin.role-permissions.index');
+        Route::post('/admin/role-permissions', [RolePermissionController::class, 'store'])->name('admin.role-permissions.store');
+        Route::put('/admin/role-permissions/{role}', [RolePermissionController::class, 'update'])->name('admin.role-permissions.update');
+        Route::delete('/admin/role-permissions/{role}', [RolePermissionController::class, 'destroy'])->name('admin.role-permissions.destroy');
 
         // Activity Catalog management (Admin only)
         Route::get('/admin/activities/create', [ActivityController::class, 'create'])->name('admin.activities.create');
@@ -114,44 +118,61 @@ Route::middleware('auth')->group(function () {
         Route::put('/admin/activities/{activity}', [ActivityController::class, 'update'])->name('admin.activities.update')->whereNumber('activity');
         Route::patch('/admin/activities/{activity}/toggle-status', [ActivityController::class, 'toggleStatus'])->name('admin.activities.toggle-status')->whereNumber('activity');
         Route::delete('/admin/activities/{activity}', [ActivityController::class, 'destroy'])->name('admin.activities.destroy')->whereNumber('activity');
+    });
 
-        // Children management
+    // Staff management
+    Route::middleware('role_or_permission:admin|staff.view-any')->group(function () {
+        Route::patch('/admin/staff/{staff}/toggle-status', [StaffController::class, 'toggleStatus'])->name('admin.staff.toggle-status');
+        Route::resource('/admin/staff', StaffController::class, ['as' => 'admin']);
+    });
+
+    // Programs management
+    Route::middleware('role_or_permission:admin|programs.view-any|programs.view')->group(function () {
+        Route::resource('/admin/programs', ProgramController::class, ['as' => 'admin']);
+    });
+
+    // Children management
+    Route::middleware('role_or_permission:admin|children.view-any|children.view')->group(function () {
         Route::resource('/admin/children', ChildController::class, ['as' => 'admin']);
         Route::post('/admin/children/{child}/safety-tag', [ChildController::class, 'generateSafetyTag'])->name('admin.children.generate-safety-tag');
         Route::patch('/admin/children/safety-tag/{tag}/deactivate', [ChildController::class, 'deactivateSafetyTag'])->name('admin.children.deactivate-safety-tag');
         Route::get('/admin/documents/{document}/download', [ChildController::class, 'downloadDocument'])->name('admin.documents.download');
         Route::delete('/admin/documents/{document}', [ChildController::class, 'destroyDocument'])->name('admin.documents.destroy');
+    });
 
-        // Enrollments management
+    // Enrollments management
+    Route::middleware('role_or_permission:admin|enrollments.view-any|enrollments.view')->group(function () {
         Route::resource('/admin/enrollments', EnrollmentController::class, ['as' => 'admin']);
         Route::patch('/admin/enrollments/{enrollment}/approve', [EnrollmentController::class, 'approve'])->name('admin.enrollments.approve');
         Route::patch('/admin/enrollments/{enrollment}/reject', [EnrollmentController::class, 'reject'])->name('admin.enrollments.reject');
         Route::patch('/admin/enrollments/{enrollment}/withdraw', [EnrollmentController::class, 'withdraw'])->name('admin.enrollments.withdraw');
         Route::patch('/admin/enrollments/{enrollment}/graduate', [EnrollmentController::class, 'graduate'])->name('admin.enrollments.graduate');
+    });
 
-        // Role-Permission management
-        Route::get('/admin/role-permissions', [RolePermissionController::class, 'index'])->name('admin.role-permissions.index');
-        Route::post('/admin/role-permissions', [RolePermissionController::class, 'store'])->name('admin.role-permissions.store');
-        Route::put('/admin/role-permissions/{role}', [RolePermissionController::class, 'update'])->name('admin.role-permissions.update');
-        Route::delete('/admin/role-permissions/{role}', [RolePermissionController::class, 'destroy'])->name('admin.role-permissions.destroy');
-
-        // Invoice & Payment management
+    // Invoice & Payment management
+    Route::middleware('role_or_permission:admin|invoices.view-any|invoices.view')->group(function () {
         Route::get('/admin/invoices/get-children', [InvoiceController::class, 'getChildrenByParent'])->name('admin.invoices.get-children');
         Route::get('/admin/invoices/get-therapy-sessions', [InvoiceController::class, 'getBillableTherapySessions'])->name('admin.invoices.get-therapy-sessions');
         Route::resource('/admin/invoices', InvoiceController::class, ['as' => 'admin'])->except(['edit', 'update']);
         Route::post('/admin/invoices/{invoice}/payments', [InvoiceController::class, 'addPayment'])->name('admin.invoices.add-payment');
         Route::patch('/admin/invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('admin.invoices.cancel');
+    });
 
-        // Announcement management
+    // Announcement management
+    Route::middleware('role_or_permission:admin|announcements.view-any')->group(function () {
         Route::resource('/admin/announcements', AnnouncementController::class, ['as' => 'admin']);
+    });
 
-        // Therapy Sessions management
+    // Therapy Sessions management
+    Route::middleware('role_or_permission:admin|therapy-sessions.view-any|therapy-sessions.view')->group(function () {
         Route::resource('/admin/therapy-sessions', TherapySessionController::class, ['as' => 'admin'])
             ->parameters(['therapy-sessions' => 'therapySession']);
         Route::patch('/admin/therapy-sessions/{therapySession}/update-status', [TherapySessionController::class, 'updateStatus'])
             ->name('admin.therapy-sessions.update-status');
+    });
 
-        // Reports
+    // Reports
+    Route::middleware('role_or_permission:admin|reports.view|reports.billing')->group(function () {
         Route::get('/admin/reports/billing-revenue', [ReportController::class, 'billingRevenue'])->name('admin.reports.billing-revenue');
         Route::get('/admin/reports/activity-calendar', [ReportController::class, 'activityCalendar'])->name('admin.reports.activity-calendar');
     });

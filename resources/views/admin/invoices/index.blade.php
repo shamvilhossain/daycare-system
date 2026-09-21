@@ -79,11 +79,17 @@
                     <div class="page-banner d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div>
                             <h2><i class="bi bi-receipt-cutoff me-2"></i>Invoices & Payments</h2>
-                            <p>Create invoices, track payments, and manage billing for enrolled children</p>
+                            @if(auth()->user()->hasRole('parent'))
+                                <p>View your invoices, payment history, and outstanding balances</p>
+                            @else
+                                <p>Create invoices, track payments, and manage billing for enrolled children</p>
+                            @endif
                         </div>
+                        @unless(auth()->user()->hasRole('parent'))
                         <a href="{{ route('admin.invoices.create') }}" class="btn btn-light btn-sm fw-bold shadow-sm px-3" style="position:relative;z-index:1;">
                             <i class="bi bi-plus-lg me-1"></i> New Invoice
                         </a>
+                        @endunless
                     </div>
                 </div>
             </div>
@@ -244,7 +250,10 @@
                                             <tr>
                                                 <td colspan="10" class="text-center py-5 text-muted">
                                                     <i class="bi bi-receipt fs-1 d-block mb-2 opacity-25"></i>
-                                                    No invoices found. <a href="{{ route('admin.invoices.create') }}">Create one</a>.
+                                                    No invoices found.
+                                                    @unless(auth()->user()->hasRole('parent'))
+                                                        <a href="{{ route('admin.invoices.create') }}">Create one</a>.
+                                                    @endunless
                                                 </td>
                                             </tr>
                                         @endforelse

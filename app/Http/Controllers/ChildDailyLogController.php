@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\ScopesForParent;
 use App\Http\Requests\DailyLog\StoreChildDailyLogRequest;
 use App\Http\Requests\DailyLog\UpdateChildDailyLogRequest;
 use App\Models\ActivityOccurrence;
@@ -13,10 +14,13 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class ChildDailyLogController extends Controller
 {
+    use ScopesForParent;
+
     protected ChildDailyLogService $logService;
 
     public function __construct(ChildDailyLogService $logService)
@@ -30,16 +34,25 @@ class ChildDailyLogController extends Controller
     public function index(Request $request): View|JsonResponse
     {
         $date = $request->query('date', Carbon::today()->toDateString());
-        $logs = $this->logService->getPaginatedLogs($request);
+        $logs = $this->logService->getPaginatedLogs($request, $this->getParentChildIds());
         $children = Child::where('is_active', true)->orderBy('first_name')->get();
         $staffMembers = Staff::orderBy('first_name')->get();
 
         // Get children with activity today for quick jump cards
-        $childrenWithLogs = Child::whereHas('dailyLogs', function ($q) use ($date) {
+        $childrenWithLogsQuery = Child::whereHas('dailyLogs', function ($q) use ($date) {
             $q->whereDate('log_date', $date);
         })->withCount(['dailyLogs as today_logs_count' => function ($q) use ($date) {
             $q->whereDate('log_date', $date);
-        }])->get();
+        }]);
+
+        // Scope for parents
+        $parentChildIds = $this->getParentChildIds();
+        if ($parentChildIds !== null) {
+            $childrenWithLogsQuery->whereIn('id', $parentChildIds);
+            $children = $children->filter(fn($c) => in_array($c->id, $parentChildIds))->values();
+        }
+
+        $childrenWithLogs = $childrenWithLogsQuery->get();
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -63,6 +76,8 @@ class ChildDailyLogController extends Controller
      */
     public function childDay(Request $request, Child $child): View|JsonResponse
     {
+        $this->authorizeParentAccessToChild($child);
+
         $date = $request->query('date', Carbon::today()->toDateString());
         $child->load(['parents', 'enrollments.program']);
 
@@ -100,6 +115,10 @@ class ChildDailyLogController extends Controller
      */
     public function store(StoreChildDailyLogRequest $request): RedirectResponse|JsonResponse
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $log = $this->logService->createLog($request->validated(), $request->user());
 
         if ($request->wantsJson()) {
@@ -118,6 +137,10 @@ class ChildDailyLogController extends Controller
      */
     public function update(UpdateChildDailyLogRequest $request, ChildDailyLog $childDailyLog): RedirectResponse|JsonResponse
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $updated = $this->logService->updateLog($childDailyLog, $request->validated());
 
         if ($request->wantsJson()) {
@@ -136,6 +159,10 @@ class ChildDailyLogController extends Controller
      */
     public function destroy(ChildDailyLog $childDailyLog): RedirectResponse|JsonResponse
     {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
         $type = $childDailyLog->formatted_type;
         $this->logService->deleteLog($childDailyLog);
 
