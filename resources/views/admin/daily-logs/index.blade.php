@@ -196,9 +196,14 @@
                             <h5 class="card-title fw-bold mb-0 text-dark">
                                 <i class="bi bi-list-columns-reverse me-2 text-primary"></i>Daily Records Stream &bull; {{ \Carbon\Carbon::parse($date)->format('M d, Y') }}
                             </h5>
-                            <span class="badge bg-light text-dark border px-3 py-2">
-                                Showing <strong>{{ $logs->total() }}</strong> total log entries
-                            </span>
+                            <div>
+                                <button type="button" class="btn btn-primary btn-sm px-3 py-1 me-2" title="Log Activity" onclick="openLogModal('activity')">
+                                    <i class="bi bi-plus-circle me-1"></i>Log Activity
+                                </button>
+                                <span class="badge bg-light text-dark border px-3 py-2">
+                                    Showing <strong>{{ $logs->total() }}</strong> total log entries
+                                </span>
+                            </div>
                         </div>
                         <div class="card-body p-0">
                             @if ($logs->isEmpty())
@@ -216,7 +221,6 @@
                                                 <th>Type</th>
                                                 <th>Time / Duration</th>
                                                 <th>Details & Summary</th>
-                                                <th>Staff</th>
                                                 <th class="text-end pe-3">Action</th>
                                             </tr>
                                         </thead>
@@ -276,9 +280,6 @@
                                                             </div>
                                                         @endif
                                                     </td>
-                                                    <td>
-                                                        <span class="text-dark small">{{ $log->staff ? $log->staff->full_name : 'Staff' }}</span>
-                                                    </td>
                                                     <td class="text-end pe-3">
                                                         <a href="{{ route('admin.child-daily-logs.child-day', ['child' => $log->child_id, 'date' => $log->log_date->toDateString()]) }}" class="btn btn-outline-primary btn-sm px-2 py-1" title="Open Child Timeline">
                                                             <i class="bi bi-clock-history me-1"></i>Timeline
@@ -306,5 +307,183 @@
             </div>
         </main>
     </div>
+
+    {{-- UNIVERSAL QUICK LOG MODAL --}}
+    <div class="modal fade" id="universalLogModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form method="POST" action="{{ route('admin.child-daily-logs.store') }}" class="modal-content" id="logForm">
+                @csrf
+                <input type="hidden" name="log_date" value="{{ $date ?: \Carbon\Carbon::today()->toDateString() }}">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold text-dark" id="logModalTitle">
+                        <i class="bi bi-journal-plus me-2"></i>Record Entry
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    {{-- Child Selection --}}
+                    <div class="mb-3" id="childSelectionSection">
+                        <label class="form-label fw-semibold">Select Child</label>
+                        <select name="child_id" id="modalChildIdSelect" class="form-select" required>
+                            <option value="">-- Select Child --</option>
+                            @foreach ($presentChildren as $child)
+                                <option value="{{ $child->id }}">{{ $child->full_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Log Type --}}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Entry Type</label>
+                        <select name="log_type" id="modalLogType" class="form-select" onchange="toggleLogFields(this.value)" required>
+                            <option value="nap">Nap & Sleep</option>
+                            <option value="meal">Meal & Nutrition</option>
+                            <option value="bottle">Bottle Feeding</option>
+                            <option value="activity">Learning Activity</option>
+                            <option value="diaper_change">Diaper / Restroom</option>
+                            <option value="incident">Incident / Health</option>
+                            <option value="medication">Medication Administered</option>
+                            <option value="special_program">Special Program</option>
+                            <option value="other">General Note</option>
+                        </select>
+                    </div>
+
+                    {{-- Time range --}}
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Start Time</label>
+                            <input type="time" name="start_time" id="modalStartTime" class="form-control" value="{{ \Carbon\Carbon::now()->format('H:i') }}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold" id="endTimeLabel">End Time</label>
+                            <input type="time" name="end_time" id="modalEndTime" class="form-control">
+                        </div>
+                    </div>
+
+                    {{-- Meal-specific section --}}
+                    <div id="mealSection" style="display: none;">
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">Meal Category</label>
+                                <select name="meal_type" id="modalMealType" class="form-select">
+                                    <option value="breakfast">Breakfast</option>
+                                    <option value="lunch" selected>Lunch</option>
+                                    <option value="snack">Snack</option>
+                                    <option value="bottle">Bottle</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">Appetite / Quality</label>
+                                <select name="quality" id="modalQuality" class="form-select">
+                                    <option value="good" selected>Good</option>
+                                    <option value="fair">Fair</option>
+                                    <option value="poor">Poor</option>
+                                    <option value="refused">Refused</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">Amount Eaten</label>
+                                <input type="text" name="amount_eaten" id="modalAmountEaten" class="form-control" placeholder="e.g. All, Most, Half, 6 oz">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">Items Served</label>
+                                <input type="text" name="items_served" id="modalItemsServed" class="form-control" placeholder="e.g. Pasta, apple slices">
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Activity-specific section --}}
+                    <div id="activitySection" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Scheduled Activity (Optional)</label>
+                            <select name="activity_occurrence_id" id="modalActivityOccurrence" class="form-select">
+                                <option value="">Select Scheduled Activity (or leave empty)...</option>
+                                @foreach ($occurrences ?? [] as $occ)
+                                    <option value="{{ $occ->id }}">
+                                        {{ $occ->activity->title }} ({{ $occ->start_time ? substr($occ->start_time, 0, 5) : 'Anytime' }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" name="is_completed" value="1" id="modalIsCompleted" class="form-check-input" checked>
+                            <label class="form-check-label fw-semibold" for="modalIsCompleted">Child completed / actively participated in this activity</label>
+                        </div>
+                    </div>
+
+                    {{-- Notes --}}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" id="notesLabel">Notes / Observations</label>
+                        <textarea name="notes" id="modalNotes" class="form-control" rows="3" placeholder="Describe how the child behaved, sleep soundly, comments..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-bold" id="modalSubmitBtn">Save Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleLogFields(type) {
+            const mealSection = document.getElementById('mealSection');
+            const activitySection = document.getElementById('activitySection');
+            const notesLabel = document.getElementById('notesLabel');
+            const endTimeLabel = document.getElementById('endTimeLabel');
+
+            if (type === 'meal' || type === 'bottle') {
+                mealSection.style.display = 'block';
+                activitySection.style.display = 'none';
+                notesLabel.innerText = 'Meal Notes (Optional)';
+            } else if (type === 'activity') {
+                mealSection.style.display = 'none';
+                activitySection.style.display = 'block';
+                notesLabel.innerText = 'Activity Notes & Engagement';
+            } else {
+                mealSection.style.display = 'none';
+                activitySection.style.display = 'none';
+                if (type === 'incident') {
+                    notesLabel.innerText = 'Incident Description & Immediate Care *';
+                } else if (type === 'nap') {
+                    notesLabel.innerText = 'Sleep Observations (Optional)';
+                } else {
+                    notesLabel.innerText = 'Notes / Details';
+                }
+            }
+        }
+
+        function openLogModal(type, childId = null) {
+            document.getElementById('logForm').action = "{{ route('admin.child-daily-logs.store') }}";
+            // Remove PUT method spoofing if present
+            const methodSpoof = document.getElementById('methodSpoofInput');
+            if (methodSpoof) methodSpoof.remove();
+
+            const childSelect = document.getElementById('modalChildIdSelect');
+            const childSection = document.getElementById('childSelectionSection');
+            
+            if (childId) {
+                childSelect.value = childId;
+                childSection.style.display = 'none';
+            } else {
+                childSelect.value = '';
+                childSection.style.display = 'block';
+            }
+
+            document.getElementById('logModalTitle').innerHTML = '<i class="bi bi-journal-plus me-2"></i>Record ' + type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ');
+            document.getElementById('modalSubmitBtn').innerText = 'Save Entry';
+            document.getElementById('modalLogType').value = type;
+            document.getElementById('modalStartTime').value = new Date().toTimeString().substring(0, 5);
+            document.getElementById('modalEndTime').value = '';
+            document.getElementById('modalNotes').value = '';
+            document.getElementById('modalAmountEaten').value = '';
+            document.getElementById('modalItemsServed').value = '';
+
+            toggleLogFields(type);
+            new bootstrap.Modal(document.getElementById('universalLogModal')).show();
+        }
+    </script>
 </body>
 </html>

@@ -542,18 +542,6 @@
                         </div>
                     </div>
 
-                    {{-- Staff attribution --}}
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Logged By Staff</label>
-                        <select name="staff_id" id="modalStaffId" class="form-select">
-                            @foreach ($staffMembers as $staff)
-                                <option value="{{ $staff->id }}" {{ (Auth::user()->staffProfile && Auth::user()->staffProfile->id === $staff->id) ? 'selected' : '' }}>
-                                    {{ $staff->full_name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
                     {{-- Notes --}}
                     <div class="mb-3">
                         <label class="form-label fw-semibold" id="notesLabel">Notes / Observations</label>
@@ -641,9 +629,6 @@
             document.getElementById('modalItemsServed').value = log.items_served || '';
             if (log.activity_occurrence_id) {
                 document.getElementById('modalActivityOccurrence').value = log.activity_occurrence_id;
-            }
-            if (log.staff_id) {
-                document.getElementById('modalStaffId').value = log.staff_id;
             }
             document.getElementById('modalIsCompleted').checked = !!log.is_completed;
 

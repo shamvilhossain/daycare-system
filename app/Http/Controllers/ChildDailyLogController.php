@@ -33,16 +33,24 @@ class ChildDailyLogController extends Controller
      */
     public function index(Request $request): View|JsonResponse
     {
-        $date = $request->query('date', Carbon::today()->toDateString());
+        if (!$request->has('date')) {
+            $request->merge(['date' => Carbon::today()->toDateString()]);
+        }
+        $date = $request->input('date');
+
         $logs = $this->logService->getPaginatedLogs($request, $this->getParentChildIds());
         $children = Child::where('is_active', true)->orderBy('first_name')->get();
         $staffMembers = Staff::orderBy('first_name')->get();
 
         // Get children with activity today for quick jump cards
         $childrenWithLogsQuery = Child::whereHas('dailyLogs', function ($q) use ($date) {
-            $q->whereDate('log_date', $date);
+            if ($date) {
+                $q->whereDate('log_date', $date);
+            }
         })->withCount(['dailyLogs as today_logs_count' => function ($q) use ($date) {
-            $q->whereDate('log_date', $date);
+            if ($date) {
+                $q->whereDate('log_date', $date);
+            }
         }]);
 
         // Scope for parents
@@ -53,6 +61,14 @@ class ChildDailyLogController extends Controller
         }
 
         $childrenWithLogs = $childrenWithLogsQuery->get();
+        $occurrences = \App\Models\ActivityOccurrence::with('activity')
+            ->whereDate('occurrence_date', $date ?: Carbon::today()->toDateString())
+            ->get();
+
+        $presentChildren = Child::whereHas('attendances', function ($query) use ($date) {
+            $query->whereDate('attendance_date', $date ?: Carbon::today()->toDateString())
+                  ->whereNotNull('check_in_time');
+        })->where('is_active', true)->orderBy('first_name')->get();
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -67,7 +83,9 @@ class ChildDailyLogController extends Controller
             'children',
             'staffMembers',
             'childrenWithLogs',
-            'date'
+            'date',
+            'occurrences',
+            'presentChildren'
         ));
     }
 

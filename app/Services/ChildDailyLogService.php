@@ -160,7 +160,7 @@ class ChildDailyLogService
 
         return $query->orderBy('log_date', 'desc')
             ->chronological()
-            ->paginate(15)
+            ->paginate(10)
             ->appends($request->query());
     }
 
