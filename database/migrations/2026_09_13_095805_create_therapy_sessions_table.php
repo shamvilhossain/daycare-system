@@ -20,7 +20,10 @@ return new class extends Migration {
             // a staff record can't silently wipe real session history
 
             $table->foreignId('therapy_service_id')->constrained('therapy_services')->restrictOnDelete();
-
+            $table->foreignId('child_therapy_package_id')
+                ->nullable()
+                ->constrained('child_therapy_packages')
+                ->nullOnDelete();
             $table->date('session_date');
             $table->time('start_time');
             $table->time('end_time');
