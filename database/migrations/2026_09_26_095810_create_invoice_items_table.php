@@ -16,6 +16,10 @@ return new class extends Migration {
             $table->foreignId('therapy_session_id')->nullable()->constrained('therapy_sessions')->nullOnDelete();
             // nullable — only set for therapy line items; null for daycare/manual items
             // nullOnDelete — deleting a session shouldn't wipe invoice history
+            $table->foreignId('child_therapy_package_id')
+                    ->nullable()
+                    ->constrained('child_therapy_packages')
+                    ->nullOnDelete();
 
             $table->string('description')->comment('e.g., tuition, Late Pickup Fee, SLT Session.');
             $table->unsignedInteger('quantity')->default(1);

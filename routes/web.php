@@ -15,6 +15,9 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\TherapySessionController;
+use App\Http\Controllers\TherapyServiceController;
+use App\Http\Controllers\TherapyPackageController;
+use App\Http\Controllers\ChildTherapyPackageController;
 use App\Http\Controllers\ChildSafetyCardController;
 use App\Models\Announcement;
 use Illuminate\Support\Facades\Route;
@@ -169,6 +172,28 @@ Route::middleware('auth')->group(function () {
             ->parameters(['therapy-sessions' => 'therapySession']);
         Route::patch('/admin/therapy-sessions/{therapySession}/update-status', [TherapySessionController::class, 'updateStatus'])
             ->name('admin.therapy-sessions.update-status');
+    });
+
+    // Therapy Services catalog (admin-only CRUD)
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('/admin/therapy-services', TherapyServiceController::class, ['as' => 'admin'])
+            ->parameters(['therapy-services' => 'therapyService']);
+    });
+
+    // Therapy Packages catalog (admin-only CRUD)
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('/admin/therapy-packages', TherapyPackageController::class, ['as' => 'admin'])
+            ->parameters(['therapy-packages' => 'therapyPackage'])
+            ->except(['show']);
+    });
+
+    // Child Therapy Packages (viewing: all roles; purchase/cancel: admin & staff)
+    Route::middleware('role_or_permission:admin|child-therapy-packages.view-any|child-therapy-packages.view')->group(function () {
+        Route::get('/admin/child-therapy-packages', [ChildTherapyPackageController::class, 'index'])->name('admin.child-therapy-packages.index');
+        Route::get('/admin/child-therapy-packages/{childTherapyPackage}', [ChildTherapyPackageController::class, 'show'])->name('admin.child-therapy-packages.show');
+        Route::get('/admin/child-therapy-packages-create', [ChildTherapyPackageController::class, 'create'])->name('admin.child-therapy-packages.create');
+        Route::post('/admin/child-therapy-packages', [ChildTherapyPackageController::class, 'store'])->name('admin.child-therapy-packages.store');
+        Route::patch('/admin/child-therapy-packages/{childTherapyPackage}/cancel', [ChildTherapyPackageController::class, 'cancel'])->name('admin.child-therapy-packages.cancel');
     });
 
     // Reports

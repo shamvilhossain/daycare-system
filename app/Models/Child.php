@@ -98,4 +98,8 @@ class Child extends Model
 
         return $parents->first(fn($p) => $p->pivot->is_primary) ?? $parents->first();
     }
+
+    public function therapyPackages() { 
+        return $this->hasMany(ChildTherapyPackage::class); 
+    }
 }

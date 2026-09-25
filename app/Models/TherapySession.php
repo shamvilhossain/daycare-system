@@ -37,4 +37,8 @@ class TherapySession extends Model
     {
         return $this->hasOne(InvoiceItem::class);
     }
+  
+    public function childTherapyPackage() { 
+        return $this->belongsTo(ChildTherapyPackage::class); 
+    }
 }

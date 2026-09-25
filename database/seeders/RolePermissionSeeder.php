@@ -62,10 +62,21 @@ class RolePermissionSeeder extends Seeder
             // Announcements
             'announcements.view-any', 'announcements.create',
 
+            // Therapy Services (catalog)
+            'therapy-services.view-any', 'therapy-services.create',
+            'therapy-services.update', 'therapy-services.delete',
+
             // Therapy Sessions
             'therapy-sessions.view-any', 'therapy-sessions.view',
             'therapy-sessions.create', 'therapy-sessions.update',
-            'therapy-sessions.delete',
+
+            // Therapy Packages (catalog)
+            'therapy-packages.view-any', 'therapy-packages.create',
+            'therapy-packages.update', 'therapy-packages.delete',
+
+            // Child Therapy Packages (purchased instances)
+            'child-therapy-packages.view-any', 'child-therapy-packages.view',
+            'child-therapy-packages.purchase', 'child-therapy-packages.cancel',
 
             // Reports & settings
             'reports.view',
@@ -99,7 +110,10 @@ class RolePermissionSeeder extends Seeder
             'child-daily-logs.view-any', 'child-daily-logs.view',
             'child-daily-logs.create', 'child-daily-logs.update',
             'announcements.view-any',
+            'therapy-services.view-any',
             'therapy-sessions.view-any', 'therapy-sessions.view',
+            'therapy-sessions.create', 'therapy-sessions.update',
+            'child-therapy-packages.view-any', 'child-therapy-packages.view',
         ]);
 
         // ── Parent: read-only, scoped to their own children ──────────
@@ -116,6 +130,7 @@ class RolePermissionSeeder extends Seeder
             'payments.view-any',
             'announcements.view-any',
             'therapy-sessions.view-any', 'therapy-sessions.view',
+            'child-therapy-packages.view-any', 'child-therapy-packages.view',
         ]);
     }
 }

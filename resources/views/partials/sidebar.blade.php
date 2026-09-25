@@ -60,8 +60,12 @@
                     $canInvoices = auth()->user()->can('invoices.view-any') || auth()->user()->can('invoices.view') || auth()->user()->can('payments.view-any');
                     $canAnnouncements = auth()->user()->can('announcements.view-any');
                     $canTherapy = auth()->user()->can('therapy-sessions.view-any') || auth()->user()->can('therapy-sessions.view');
+                    $canTherapyServices = auth()->user()->can('therapy-services.view-any');
+                    $canTherapyPackages = auth()->user()->can('therapy-packages.view-any');
+                    $canChildTherapyPkgs = auth()->user()->can('child-therapy-packages.view-any') || auth()->user()->can('child-therapy-packages.view');
+                    $showTherapyMenu = $canTherapy || $canTherapyServices || $canTherapyPackages || $canChildTherapyPkgs;
                 @endphp
-                @if ($canChildren || $canStaff || $canActivities || $canEnrollments || $canInvoices || $canAnnouncements || $canTherapy)
+                @if ($canChildren || $canStaff || $canActivities || $canEnrollments || $canInvoices || $canAnnouncements || $showTherapyMenu)
                     <li class="nav-header">MANAGEMENT</li>
                     @if ($canChildren)
                     <li class="nav-item">
@@ -111,12 +115,55 @@
                         </a>
                     </li>
                     @endif
-                    @if ($canTherapy)
-                    <li class="nav-item">
-                        <a href="{{ route('admin.therapy-sessions.index') }}" class="nav-link {{ request()->routeIs('admin.therapy-sessions.*') ? 'active' : '' }}">
+                    @if ($showTherapyMenu)
+                    @php
+                        $therapyActive = request()->routeIs('admin.therapy-sessions.*')
+                            || request()->routeIs('admin.therapy-services.*')
+                            || request()->routeIs('admin.therapy-packages.*')
+                            || request()->routeIs('admin.child-therapy-packages.*');
+                    @endphp
+                    <li class="nav-item {{ $therapyActive ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ $therapyActive ? 'active' : '' }}">
                             <i class="nav-icon bi bi-heart-pulse-fill"></i>
-                            <p>Therapy Sessions</p>
+                            <p>
+                                Therapy
+                                <i class="nav-arrow bi bi-chevron-right"></i>
+                            </p>
                         </a>
+                        <ul class="nav nav-treeview">
+                            @if ($canTherapy)
+                            <li class="nav-item">
+                                <a href="{{ route('admin.therapy-sessions.index') }}" class="nav-link {{ request()->routeIs('admin.therapy-sessions.*') ? 'active' : '' }}">
+                                    <i class="nav-icon bi bi-calendar2-heart"></i>
+                                    <p>Sessions</p>
+                                </a>
+                            </li>
+                            @endif
+                            @if ($canChildTherapyPkgs)
+                            <li class="nav-item">
+                                <a href="{{ route('admin.child-therapy-packages.index') }}" class="nav-link {{ request()->routeIs('admin.child-therapy-packages.*') ? 'active' : '' }}">
+                                    <i class="nav-icon bi bi-box-seam"></i>
+                                    <p>Child Packages</p>
+                                </a>
+                            </li>
+                            @endif
+                            @if ($canTherapyServices)
+                            <li class="nav-item">
+                                <a href="{{ route('admin.therapy-services.index') }}" class="nav-link {{ request()->routeIs('admin.therapy-services.*') ? 'active' : '' }}">
+                                    <i class="nav-icon bi bi-clipboard2-pulse"></i>
+                                    <p>Service Catalog</p>
+                                </a>
+                            </li>
+                            @endif
+                            @if ($canTherapyPackages)
+                            <li class="nav-item">
+                                <a href="{{ route('admin.therapy-packages.index') }}" class="nav-link {{ request()->routeIs('admin.therapy-packages.*') ? 'active' : '' }}">
+                                    <i class="nav-icon bi bi-gift"></i>
+                                    <p>Package Catalog</p>
+                                </a>
+                            </li>
+                            @endif
+                        </ul>
                     </li>
                     @endif
                 @endif

@@ -20,4 +20,8 @@ class InvoiceItem extends Model
     {
         return $this->belongsTo(TherapySession::class);
     }
+
+    public function childTherapyPackage() { 
+        return $this->belongsTo(ChildTherapyPackage::class); 
+    }
 }
