@@ -17,7 +17,7 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::with(['roles', 'parentProfile', 'staffProfile'])->latest();
+        $query = User::with(['roles', 'parentProfile.children', 'staffProfile'])->latest();
 
         // Search filter (email, first name, last name, phone/mobile)
         if ($search = $request->input('search')) {

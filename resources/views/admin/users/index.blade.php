@@ -444,7 +444,17 @@
                                                             <div><i class="bi bi-phone text-muted me-1"></i> {{ $user->parentProfile->mobile }}</div>
                                                         @endif
                                                         @if($user->parentProfile->city || $user->parentProfile->occupation)
-                                                            <div class="text-muted">{{ $user->parentProfile->occupation ?? 'Parent' }} {{ $user->parentProfile->city ? '• '.$user->parentProfile->city : '' }}</div>
+                                                            <div class="text-muted mb-1">{{ $user->parentProfile->occupation ?? 'Parent' }} {{ $user->parentProfile->city ? '• '.$user->parentProfile->city : '' }}</div>
+                                                        @endif
+                                                        @if($user->parentProfile->children && $user->parentProfile->children->count() > 0)
+                                                            <div class="mt-1 d-flex flex-wrap gap-1 align-items-center">
+                                                                <span class="text-muted fw-semibold" style="font-size: 0.75rem;">Children:</span>
+                                                                @foreach($user->parentProfile->children as $child)
+                                                                    <span class="badge bg-light text-dark border border-secondary-subtle">
+                                                                        <i class="bi bi-person-fill text-muted me-1"></i>{{ $child->first_name }} {{ $child->last_name }}
+                                                                    </span>
+                                                                @endforeach
+                                                            </div>
                                                         @endif
                                                     </div>
                                                 @elseif($user->staffProfile)
