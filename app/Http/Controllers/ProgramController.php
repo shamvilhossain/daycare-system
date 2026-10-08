@@ -31,28 +31,54 @@ class ProgramController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'service_type' => 'required|in:full_day,half_day,after_school,drop_in',
-            'billing_model' => 'required|in:monthly,daily,hourly',
+            'name'           => 'required|string|max:255',
+            'service_type'   => 'required|in:full_day,half_day,after_school,drop_in',
+            'billing_model'  => 'required|in:monthly,daily,hourly',
             'min_age_months' => 'nullable|integer|min:0',
-            'max_age_months' => 'nullable|integer|gte:min_age_months',
-            'capacity' => 'required|integer|min:1',
-            'monthly_fee' => 'nullable|numeric|min:0',
-            'daily_rate' => 'nullable|numeric|min:0',
-            'hourly_rate' => 'nullable|numeric|min:0',
-            'day_start_time' => 'nullable|date_format:H:i',
-            'day_end_time' => 'nullable|date_format:H:i|after:day_start_time',
-            'is_active' => 'nullable|boolean'
+            'max_age_months' => [
+                'nullable',
+                'integer',
+                'min:0',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($value !== null && $request->filled('min_age_months') && (int)$value < (int)$request->input('min_age_months')) {
+                        $fail('The max age must be greater than or equal to min age.');
+                    }
+                },
+            ],
+            'capacity'       => 'required|integer|min:1',
+            'monthly_fee'    => 'nullable|numeric|min:0',
+            'daily_rate'     => 'nullable|numeric|min:0',
+            'hourly_rate'    => 'nullable|numeric|min:0',
+            'day_start_time' => 'nullable|date_format:H:i,H:i:s',
+            'day_end_time'   => [
+                'nullable',
+                'date_format:H:i,H:i:s',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($value && $request->filled('day_start_time')) {
+                        $start = strtotime($request->input('day_start_time'));
+                        $end = strtotime($value);
+                        if ($start !== false && $end !== false && $end <= $start) {
+                            $fail('The end time must be after the start time.');
+                        }
+                    }
+                },
+            ],
+            'is_active'      => 'nullable',
         ]);
         
-        $validated['is_active'] = $request->has('is_active');
+        $validated['is_active'] = $request->boolean('is_active');
 
-        DB::transaction(function () use ($validated) {
-            Program::create($validated);
-        });
+        try {
+            DB::transaction(function () use ($validated) {
+                Program::create($validated);
+            });
 
-        return redirect()->route('admin.programs.index')
-            ->with('success', 'Program created successfully.');
+            return redirect()->route('admin.programs.index')
+                ->with('success', 'Program created successfully.');
+        } catch (\Throwable $e) {
+            report($e);
+            return back()->withInput()->with('error', 'Failed to create program: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -77,28 +103,54 @@ class ProgramController extends Controller
     public function update(Request $request, Program $program)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'service_type' => 'required|in:full_day,half_day,after_school,drop_in',
-            'billing_model' => 'required|in:monthly,daily,hourly',
+            'name'           => 'required|string|max:255',
+            'service_type'   => 'required|in:full_day,half_day,after_school,drop_in',
+            'billing_model'  => 'required|in:monthly,daily,hourly',
             'min_age_months' => 'nullable|integer|min:0',
-            'max_age_months' => 'nullable|integer|gte:min_age_months',
-            'capacity' => 'required|integer|min:1',
-            'monthly_fee' => 'nullable|numeric|min:0',
-            'daily_rate' => 'nullable|numeric|min:0',
-            'hourly_rate' => 'nullable|numeric|min:0',
-            'day_start_time' => 'nullable|date_format:H:i',
-            'day_end_time' => 'nullable|date_format:H:i|after:day_start_time',
-            'is_active' => 'nullable|boolean'
+            'max_age_months' => [
+                'nullable',
+                'integer',
+                'min:0',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($value !== null && $request->filled('min_age_months') && (int)$value < (int)$request->input('min_age_months')) {
+                        $fail('The max age must be greater than or equal to min age.');
+                    }
+                },
+            ],
+            'capacity'       => 'required|integer|min:1',
+            'monthly_fee'    => 'nullable|numeric|min:0',
+            'daily_rate'     => 'nullable|numeric|min:0',
+            'hourly_rate'    => 'nullable|numeric|min:0',
+            'day_start_time' => 'nullable|date_format:H:i,H:i:s',
+            'day_end_time'   => [
+                'nullable',
+                'date_format:H:i,H:i:s',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($value && $request->filled('day_start_time')) {
+                        $start = strtotime($request->input('day_start_time'));
+                        $end = strtotime($value);
+                        if ($start !== false && $end !== false && $end <= $start) {
+                            $fail('The end time must be after the start time.');
+                        }
+                    }
+                },
+            ],
+            'is_active'      => 'nullable',
         ]);
 
-        $validated['is_active'] = $request->has('is_active');
+        $validated['is_active'] = $request->boolean('is_active');
 
-        DB::transaction(function () use ($program, $validated) {
-            $program->update($validated);
-        });
+        try {
+            DB::transaction(function () use ($program, $validated) {
+                $program->update($validated);
+            });
 
-        return redirect()->route('admin.programs.index')
-            ->with('success', 'Program updated successfully.');
+            return redirect()->route('admin.programs.index')
+                ->with('success', 'Program updated successfully.');
+        } catch (\Throwable $e) {
+            report($e);
+            return back()->withInput()->with('error', 'Failed to update program: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -106,11 +158,22 @@ class ProgramController extends Controller
      */
     public function destroy(Program $program)
     {
-        DB::transaction(function () use ($program) {
-            $program->delete();
-        });
+        if ($program->enrollments()->exists()) {
+            return redirect()->route('admin.programs.index')
+                ->with('error', 'Cannot delete program because it has enrolled children.');
+        }
 
-        return redirect()->route('admin.programs.index')
-            ->with('success', 'Program deleted successfully.');
+        try {
+            DB::transaction(function () use ($program) {
+                $program->delete();
+            });
+
+            return redirect()->route('admin.programs.index')
+                ->with('success', 'Program deleted successfully.');
+        } catch (\Throwable $e) {
+            report($e);
+            return redirect()->route('admin.programs.index')
+                ->with('error', 'Failed to delete program: ' . $e->getMessage());
+        }
     }
 }
