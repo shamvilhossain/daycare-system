@@ -39,7 +39,7 @@ class EnrollmentSeeder extends Seeder
                 'program_id'   => 5,
                 'service_type' => 'full_day',
                 'status'       => 'pending',
-                'start_date'   => '2023-09-01',
+                'start_date'   => '2026-03-01',
                 'end_date'     => null,
                 'notes'        => 'Awaiting approval',
                 'created_by'   => 4,
