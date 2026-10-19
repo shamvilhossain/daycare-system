@@ -83,7 +83,7 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('dashboard');
+        return redirect()->route($user->hasRole('parent') ? 'parent.today' : 'dashboard');
     }
 
     public function showLogin()
@@ -127,7 +127,10 @@ class AuthController extends Controller
         $request->session()->regenerate();
         Auth::user()->update(['last_login' => now()]);
 
-        return redirect()->intended(route('dashboard'));
+        // Parents land on the mobile parent portal; admin/staff keep the AdminLTE dashboard.
+        return redirect()->intended(
+            Auth::user()->hasRole('parent') ? route('parent.today') : route('dashboard')
+        );
     }
 
     public function logout(Request $request)

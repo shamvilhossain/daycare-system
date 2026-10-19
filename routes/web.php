@@ -203,6 +203,9 @@ Route::middleware('auth')->group(function () {
     });
 });
 
+// Parent Portal (mobile-first, /parent/*)
+require __DIR__.'/parent.php';
+
 // Serve files from storage/app/public when public/storage symlink is not created (e.g. Windows/Laragon dev)
 Route::get('/storage/{path}', function (string $path) {
     $cleanPath = str_replace(['..', "\0"], '', $path);

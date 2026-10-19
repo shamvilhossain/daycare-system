@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#7c3aed">
+    <title>You're offline | KinderCare</title>
+    <style>
+        /* Fully self-contained (no external files): the service worker serves this page
+           in place of whatever URL failed, so relative links would not resolve. */
+        *, *::before, *::after { box-sizing: border-box; }
+        :root {
+            --primary: #7c3aed;
+            --gradient: linear-gradient(135deg, #f97066 0%, #c061cb 50%, #7c3aed 100%);
+            --bg: #f5f3ff;
+            --text: #1e1b4b;
+            --muted: #6b7280;
+        }
+        html, body { margin: 0; height: 100%; }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex; align-items: center; justify-content: center;
+            padding: max(24px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+            text-align: center;
+        }
+        .card {
+            width: 100%; max-width: 420px;
+            background: #fff; border-radius: 24px;
+            border: 1px solid #ebe7f7;
+            box-shadow: 0 10px 30px rgba(124, 58, 237, .12);
+            padding: 32px 24px;
+        }
+        .logo { width: 88px; height: 88px; border-radius: 22px; box-shadow: 0 8px 20px rgba(124, 58, 237, .3); }
+        h1 { font-size: 1.35rem; margin: 20px 0 8px; }
+        p { color: var(--muted); line-height: 1.5; margin: 0 0 24px; }
+        button {
+            width: 100%; border: 0; border-radius: 14px;
+            padding: 14px 18px; font-size: 1rem; font-weight: 700;
+            color: #fff; background: var(--gradient); cursor: pointer;
+        }
+        button:active { transform: scale(.99); }
+        .status { margin-top: 14px; font-size: .85rem; color: var(--muted); }
+        .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; margin-right: 6px; vertical-align: middle; }
+        .online .dot { background: #10b981; }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <svg class="logo" width="88" height="88" viewBox="0 0 100 100" aria-hidden="true">
+            <defs>
+                <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#f97066"/><stop offset=".5" stop-color="#c061cb"/><stop offset="1" stop-color="#7c3aed"/>
+                </linearGradient>
+            </defs>
+            <rect width="100" height="100" rx="22" fill="url(#g)"/>
+            <path d="M50 22 78 47H71V78H29V47H22Z" fill="#fff"/>
+            <rect x="61" y="27" width="7" height="13" fill="#fff"/>
+            <path d="M50 70 39 58a6.2 6.2 0 0 1 11-6 6.2 6.2 0 0 1 11 6Z" fill="#7c3aed"/>
+        </svg>
+        <h1>You're offline</h1>
+        <p>We can't reach KinderCare right now. Check your internet connection and try again &mdash; your child's updates will be waiting.</p>
+        <button type="button" id="retry">Try again</button>
+        <div class="status" id="status"><span class="dot"></span><span id="status-text">No connection</span></div>
+    </main>
+
+    <script>
+        (function () {
+            var status = document.getElementById('status');
+            var text = document.getElementById('status-text');
+
+            function retry() { window.location.reload(); }
+
+            function update() {
+                var online = navigator.onLine;
+                status.classList.toggle('online', online);
+                text.textContent = online ? 'Back online — reloading…' : 'No connection';
+                if (online) setTimeout(retry, 800);
+            }
+
+            document.getElementById('retry').addEventListener('click', retry);
+            window.addEventListener('online', update);
+            window.addEventListener('offline', update);
+        })();
+    </script>
+</body>
+</html>

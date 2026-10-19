@@ -16,6 +16,14 @@
                         <p>Dashboard</p>
                     </a>
                 </li>
+                @if (auth()->user()?->hasRole('parent'))
+                    <li class="nav-item">
+                        <a href="{{ route('parent.today') }}" class="nav-link">
+                            <i class="nav-icon bi bi-phone-fill"></i>
+                            <p>Parent App</p>
+                        </a>
+                    </li>
+                @endif
 
                 {{-- DAILY OPERATIONS --}}
                 @php

@@ -1,0 +1,38 @@
+{
+    "id": "parent/",
+    "name": "KinderCare Parent",
+    "short_name": "KinderCare",
+    "description": "Your child's day at KinderCare — attendance, meals, naps, photos, therapy and fees.",
+    "lang": "en",
+    "dir": "ltr",
+    "start_url": "parent/today?source=pwa",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#f5f3ff",
+    "theme_color": "#7c3aed",
+    "categories": ["education", "lifestyle", "productivity"],
+    "icons": [
+        { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+        { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+        { "src": "icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+        { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    ],
+    "shortcuts": [
+        {
+            "name": "Today",
+            "url": "parent/today?source=shortcut",
+            "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+        },
+        {
+            "name": "Photos",
+            "url": "parent/photos?source=shortcut",
+            "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+        },
+        {
+            "name": "Fees",
+            "url": "parent/fees?source=shortcut",
+            "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+        }
+    ]
+}

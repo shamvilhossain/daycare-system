@@ -10,6 +10,8 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/css/adminlte.css',
                 'resources/js/adminlte.js',
+                'resources/css/parent.css',
+                'resources/js/parent.js',
             ],
             refresh: true,
         }),
