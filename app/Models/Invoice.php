@@ -8,6 +8,12 @@ class Invoice extends Model
 {
     protected $guarded = [];
 
+    /** All values of invoices.status, in lifecycle order. */
+    public const STATUSES = ['draft', 'sent', 'partially_paid', 'paid', 'overdue', 'cancelled'];
+
+    /** Statuses that still accept payments. */
+    public const OPEN_STATUSES = ['draft', 'sent', 'partially_paid', 'overdue'];
+
     protected $casts = [
         'invoice_date' => 'date',
         'due_date'     => 'date',
@@ -19,6 +25,7 @@ class Invoice extends Model
     public function items()   { return $this->hasMany(InvoiceItem::class); }
     public function payments() { return $this->hasMany(Payment::class); }
     public function latestPayment() { return $this->hasOne(Payment::class)->latestOfMany('paid_at'); }
+    public function onlineTransactions() { return $this->hasMany(PaymentOnlineTransaction::class); }
 
     /**
      * Total amount paid against this invoice.
@@ -105,11 +112,13 @@ class Invoice extends Model
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
-            'draft'     => 'Draft',
-            'paid'      => 'Paid',
-            'overdue'   => 'Overdue',
-            'cancelled' => 'Cancelled',
-            default     => ucfirst($this->status ?? 'Unknown'),
+            'draft'          => 'Draft',
+            'sent'           => 'Sent',
+            'partially_paid' => 'Partially Paid',
+            'paid'           => 'Paid',
+            'overdue'        => 'Overdue',
+            'cancelled'      => 'Cancelled',
+            default          => ucfirst($this->status ?? 'Unknown'),
         };
     }
 
@@ -119,11 +128,21 @@ class Invoice extends Model
     public function getStatusBadgeClassAttribute(): string
     {
         return match ($this->status) {
-            'draft'     => 'bg-warning-subtle text-warning-emphasis border border-warning-subtle',
-            'paid'      => 'bg-success-subtle text-success-emphasis border border-success-subtle',
-            'overdue'   => 'bg-danger-subtle text-danger-emphasis border border-danger-subtle',
-            'cancelled' => 'bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle',
-            default     => 'bg-secondary text-white',
+            'draft'          => 'bg-warning-subtle text-warning-emphasis border border-warning-subtle',
+            'sent'           => 'bg-info-subtle text-info-emphasis border border-info-subtle',
+            'partially_paid' => 'bg-primary-subtle text-primary-emphasis border border-primary-subtle',
+            'paid'           => 'bg-success-subtle text-success-emphasis border border-success-subtle',
+            'overdue'        => 'bg-danger-subtle text-danger-emphasis border border-danger-subtle',
+            'cancelled'      => 'bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle',
+            default          => 'bg-secondary text-white',
         };
+    }
+
+    /**
+     * Whether the invoice can still receive payments (not paid, not cancelled).
+     */
+    public function getIsOpenAttribute(): bool
+    {
+        return in_array($this->status, self::OPEN_STATUSES, true);
     }
 }

@@ -5,7 +5,7 @@
         $invoice->status === 'cancelled'                 => ['Cancelled', 'bg-secondary-subtle text-secondary'],
         $invoice->status === 'paid' || $balance <= 0     => ['Paid', 'bg-success-subtle text-success'],
         $invoice->status === 'overdue'                   => ['Overdue', 'bg-danger-subtle text-danger'],
-        $invoice->paid_total > 0                         => ['Partly paid', 'bg-info-subtle text-info-emphasis'],
+        $invoice->status === 'partially_paid' || $invoice->paid_total > 0 => ['Partly paid', 'bg-info-subtle text-info-emphasis'],
         default                                          => ['Due', 'bg-warning-subtle text-warning-emphasis'],
     };
 @endphp

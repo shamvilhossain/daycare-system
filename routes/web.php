@@ -206,6 +206,12 @@ Route::middleware('auth')->group(function () {
 // Parent Portal (mobile-first, /parent/*)
 require __DIR__.'/parent.php';
 
+// Play Store: asset links, privacy policy, account deletion (+ admin review)
+require __DIR__.'/app-store.php';
+
+// Online payments: payment links, SSLCommerz callbacks, receipts
+require __DIR__.'/payments.php';
+
 // Serve files from storage/app/public when public/storage symlink is not created (e.g. Windows/Laragon dev)
 Route::get('/storage/{path}', function (string $path) {
     $cleanPath = str_replace(['..', "\0"], '', $path);

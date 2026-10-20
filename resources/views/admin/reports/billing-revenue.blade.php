@@ -304,7 +304,7 @@
                                             ৳{{ number_format($summary['total_outstanding'], 2) }}
                                         </div>
                                         <div class="small text-muted">
-                                            <span>{{ $summary['overdue_count'] }} overdue · {{ $summary['draft_count'] }} pending</span>
+                                            <span>{{ $summary['overdue_count'] }} overdue · {{ $summary['pending_count'] }} pending</span>
                                         </div>
                                     </div>
                                 </div>
@@ -372,10 +372,9 @@
                                         <label class="form-label small fw-semibold text-secondary">Status</label>
                                         <select name="status" class="form-select">
                                             <option value="">All</option>
-                                            <option value="paid" {{ request('status') === 'paid' ? 'selected' : '' }}>Paid</option>
-                                            <option value="overdue" {{ request('status') === 'overdue' ? 'selected' : '' }}>Overdue</option>
-                                            <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Draft</option>
-                                            <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                            @foreach(\App\Models\Invoice::STATUSES as $s)
+                                                <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>{{ ucwords(str_replace('_', ' ', $s)) }}</option>
+                                            @endforeach
                                         </select>
                                     </div>
 

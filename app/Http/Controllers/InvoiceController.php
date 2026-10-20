@@ -69,11 +69,13 @@ class InvoiceController extends Controller
             $statsQuery->where('parent_id', $parentProfileId);
         }
         $stats = [
-            'total'     => (clone $statsQuery)->count(),
-            'draft'     => (clone $statsQuery)->where('status', 'draft')->count(),
-            'paid'      => (clone $statsQuery)->where('status', 'paid')->count(),
-            'overdue'   => (clone $statsQuery)->where('status', 'overdue')->count(),
-            'cancelled' => (clone $statsQuery)->where('status', 'cancelled')->count(),
+            'total'          => (clone $statsQuery)->count(),
+            'draft'          => (clone $statsQuery)->where('status', 'draft')->count(),
+            'sent'           => (clone $statsQuery)->where('status', 'sent')->count(),
+            'partially_paid' => (clone $statsQuery)->where('status', 'partially_paid')->count(),
+            'paid'           => (clone $statsQuery)->where('status', 'paid')->count(),
+            'overdue'        => (clone $statsQuery)->where('status', 'overdue')->count(),
+            'cancelled'      => (clone $statsQuery)->where('status', 'cancelled')->count(),
         ];
 
         $invoices = $query->orderBy('created_at', 'desc')->paginate(15)->appends($request->query());
@@ -137,7 +139,7 @@ class InvoiceController extends Controller
             abort(403, 'You do not have access to this invoice.');
         }
 
-        $invoice->load(['parent', 'child', 'items', 'payments.receivedBy']);
+        $invoice->load(['parent', 'child', 'items', 'payments.receivedBy', 'onlineTransactions']);
         return view('admin.invoices.show', compact('invoice'));
     }
 
@@ -158,6 +160,10 @@ class InvoiceController extends Controller
             'remarks'         => 'nullable|string|max:1000',
             'penalty_amount'  => 'nullable|numeric|min:0',
         ]);
+
+        if (!$invoice->is_open) {
+            return back()->with('error', 'Payments can only be recorded on unpaid, non-cancelled invoices.');
+        }
 
         $this->invoiceService->addPayment($invoice, $validated, $request->user());
 

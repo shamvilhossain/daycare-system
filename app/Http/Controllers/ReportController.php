@@ -253,6 +253,7 @@ class ReportController extends Controller
             'paid_count'        => $summaryInvoices->where('status', 'paid')->count(),
             'overdue_count'     => $summaryInvoices->where('status', 'overdue')->count(),
             'draft_count'       => $summaryInvoices->where('status', 'draft')->count(),
+            'pending_count'     => $summaryInvoices->whereIn('status', ['draft', 'sent', 'partially_paid'])->count(),
             'cancelled_count'   => $summaryInvoices->where('status', 'cancelled')->count(),
         ];
 

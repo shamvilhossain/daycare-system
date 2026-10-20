@@ -76,7 +76,15 @@
                             </h3>
                         </div>
                         <div class="col-sm-6 text-end">
-                            @if($invoice->status === 'draft')
+                            @if($invoice->is_open && $invoice->balance_due >= config('payments.min_amount'))
+                                <form action="{{ route('admin.invoices.payment-link', $invoice) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-primary me-1">
+                                        <i class="bi bi-send me-1"></i>Send Payment Link
+                                    </button>
+                                </form>
+                            @endif
+                            @if($invoice->is_open)
                                 <button type="button" class="btn btn-success me-1" data-bs-toggle="modal" data-bs-target="#paymentModal">
                                     <i class="bi bi-cash-stack me-1"></i>Record Payment
                                 </button>
@@ -255,7 +263,7 @@
                     <div class="card border-0 shadow-sm">
                         <div class="card-header bg-white d-flex justify-content-between align-items-center">
                             <h5 class="mb-0"><i class="bi bi-clock-history text-warning me-2"></i>Payment History</h5>
-                            @if($invoice->status === 'draft' && $invoice->balance_due > 0)
+                            @if($invoice->is_open && $invoice->balance_due > 0)
                                 <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#paymentModal">
                                     <i class="bi bi-plus-lg me-1"></i>Record Payment
                                 </button>
@@ -310,13 +318,98 @@
                         </div>
                     </div>
 
+                    {{-- Online payment attempts (SSLCommerz) --}}
+                    @if($invoice->onlineTransactions->isNotEmpty())
+                        <div class="card border-0 shadow-sm mt-4">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0"><i class="bi bi-globe2 text-primary me-2"></i>Online Payment Attempts</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover mb-0 align-middle">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th class="ps-3">Started</th>
+                                                <th>Reference</th>
+                                                <th class="text-end">Amount</th>
+                                                <th>Method</th>
+                                                <th>Bank Ref.</th>
+                                                <th>Status</th>
+                                                <th>Notes</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($invoice->onlineTransactions->sortByDesc('id') as $txn)
+                                                <tr>
+                                                    <td class="ps-3 small">{{ $txn->created_at->format('M d, Y H:i') }}</td>
+                                                    <td><code class="text-dark small">{{ $txn->transaction_id }}</code></td>
+                                                    <td class="text-end small">৳{{ number_format($txn->amount, 2) }}</td>
+                                                    <td class="small">{{ $txn->method_label ?? '—' }}</td>
+                                                    <td class="small">{{ $txn->pg_bank_transaction_id ?? '—' }}</td>
+                                                    <td><span class="badge {{ $txn->status_badge_class }}">{{ $txn->status_label }}</span></td>
+                                                    <td class="small text-muted">{{ $txn->remarks ? Str::limit($txn->remarks, 80) : '—' }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                 </div>
             </div>
         </main>
     </div>
 
+    {{-- Payment Link Modal (shown right after "Send Payment Link") --}}
+    @if(session('payment_link'))
+        @php $pl = session('payment_link'); @endphp
+        <div class="modal fade" id="paymentLinkModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bi bi-send text-primary me-2"></i>Payment link ready</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="small text-muted mb-2">
+                            Send this to {{ $invoice->parent?->full_name ?? 'the parent' }}. No login needed.
+                            Valid until <strong>{{ $pl['expires_at'] }}</strong>; it always charges the current balance due.
+                        </p>
+                        <label class="form-label small fw-semibold">Message</label>
+                        <textarea id="paymentLinkMessage" class="form-control mb-2" rows="5" readonly>{{ $pl['message'] }}</textarea>
+                        <label class="form-label small fw-semibold">Link only</label>
+                        <div class="input-group mb-3">
+                            <input id="paymentLinkUrl" type="text" class="form-control form-control-sm" value="{{ $pl['url'] }}" readonly>
+                            <button class="btn btn-outline-secondary btn-sm" type="button" data-copy="#paymentLinkUrl"><i class="bi bi-clipboard"></i></button>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            @if($pl['whatsapp'])
+                                <a href="{{ $pl['whatsapp'] }}" target="_blank" rel="noopener" class="btn btn-success">
+                                    <i class="bi bi-whatsapp me-1"></i>WhatsApp
+                                </a>
+                            @endif
+                            @if($pl['sms'])
+                                <a href="{{ $pl['sms'] }}" class="btn btn-outline-primary">
+                                    <i class="bi bi-chat-dots me-1"></i>SMS
+                                </a>
+                            @endif
+                            <button type="button" class="btn btn-outline-secondary" data-copy="#paymentLinkMessage">
+                                <i class="bi bi-clipboard me-1"></i>Copy message
+                            </button>
+                        </div>
+                        @unless($pl['whatsapp'] || $pl['sms'])
+                            <div class="small text-warning mt-2">No mobile number on file for this parent. Copy the message instead.</div>
+                        @endunless
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- Record Payment Modal --}}
-    @if($invoice->status === 'draft')
+    @if($invoice->is_open)
     <div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -404,6 +497,24 @@
                 }
             });
         }
+
+        // Payment link: open the share dialog and wire up copy buttons
+        const linkModal = document.getElementById('paymentLinkModal');
+        if (linkModal) {
+            new bootstrap.Modal(linkModal).show();
+        }
+        document.querySelectorAll('[data-copy]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const field = document.querySelector(btn.dataset.copy);
+                field.select();
+                (navigator.clipboard ? navigator.clipboard.writeText(field.value) : Promise.resolve(document.execCommand('copy')))
+                    .then(function () {
+                        const html = btn.innerHTML;
+                        btn.innerHTML = '<i class="bi bi-check2"></i> Copied';
+                        setTimeout(function () { btn.innerHTML = html; }, 1500);
+                    });
+            });
+        });
 
         // Show payment modal if there were validation errors
         @if($errors->any())

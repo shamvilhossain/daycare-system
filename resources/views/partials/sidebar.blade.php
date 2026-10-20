@@ -204,6 +204,18 @@
                             <p>Role Permissions</p>
                         </a>
                     </li>
+                    @php $pendingDeletionRequests = \App\Models\AccountDeletionRequest::pending()->count(); @endphp
+                    <li class="nav-item">
+                        <a href="{{ route('admin.account-deletion-requests.index') }}" class="nav-link {{ request()->routeIs('admin.account-deletion-requests.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-person-x-fill"></i>
+                            <p>
+                                Deletion Requests
+                                @if ($pendingDeletionRequests > 0)
+                                    <span class="nav-badge badge text-bg-danger me-3">{{ $pendingDeletionRequests }}</span>
+                                @endif
+                            </p>
+                        </a>
+                    </li>
                     @endif
                 @endif
 

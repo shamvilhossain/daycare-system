@@ -138,6 +138,28 @@
                         <div class="col-xl col-md-4 col-sm-6">
                             <div class="card stat-card border-0 shadow-sm h-100">
                                 <div class="card-body d-flex align-items-center gap-3">
+                                    <div class="stat-icon bg-info-subtle text-info"><i class="bi bi-send"></i></div>
+                                    <div>
+                                        <div class="text-muted small fw-semibold">SENT</div>
+                                        <div class="fs-4 fw-bold">{{ $stats['sent'] }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl col-md-4 col-sm-6">
+                            <div class="card stat-card border-0 shadow-sm h-100">
+                                <div class="card-body d-flex align-items-center gap-3">
+                                    <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-pie-chart"></i></div>
+                                    <div>
+                                        <div class="text-muted small fw-semibold">PART PAID</div>
+                                        <div class="fs-4 fw-bold">{{ $stats['partially_paid'] }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl col-md-4 col-sm-6">
+                            <div class="card stat-card border-0 shadow-sm h-100">
+                                <div class="card-body d-flex align-items-center gap-3">
                                     <div class="stat-icon bg-success-subtle text-success"><i class="bi bi-check-circle"></i></div>
                                     <div>
                                         <div class="text-muted small fw-semibold">PAID</div>
@@ -182,8 +204,8 @@
                                     <label class="form-label small fw-semibold">Status</label>
                                     <select name="status" class="form-select">
                                         <option value="">All Statuses</option>
-                                        @foreach(['draft','paid','overdue','cancelled'] as $s)
-                                            <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
+                                        @foreach(\App\Models\Invoice::STATUSES as $s)
+                                            <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>{{ ucwords(str_replace('_', ' ', $s)) }}</option>
                                         @endforeach
                                     </select>
                                 </div>

@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'parent.child' => \App\Http\Middleware\ParentChildAccess::class,
         ]);
+
+        // SSLCommerz posts cross-site to these URLs; they carry no CSRF token.
+        $middleware->preventRequestForgery(except: ['payment/sslcommerz/*']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

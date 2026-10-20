@@ -145,16 +145,65 @@ class InvoiceService
                 'received_by'    => $user->id,
             ]);
 
-            // Refresh paid total and check if invoice is fully paid
-            $invoice->refresh();
-            $totalPaid = $invoice->payments()->sum('paid_amount');
-
-            if ($totalPaid >= $invoice->total_amount) {
-                $invoice->update(['status' => 'paid']);
-            }
+            $this->refreshPaymentStatus($invoice);
 
             return $payment;
         });
+    }
+
+    /**
+     * Record a payment confirmed by the online gateway (no staff user involved).
+     * Must be called inside a transaction that holds a lock on the invoice row.
+     */
+    public function recordOnlinePayment(Invoice $invoice, float $amount, string $transactionId, ?string $remarks = null): Payment
+    {
+        $payment = Payment::create([
+            'invoice_id'     => $invoice->id,
+            'parent_id'      => $invoice->parent_id,
+            'child_id'       => $invoice->child_id,
+            'payable_amount' => $invoice->balance_due,
+            'paid_amount'    => $amount,
+            'payment_method' => 'online',
+            'transaction_id' => $transactionId,
+            'paid_at'        => now(),
+            'remarks'        => $remarks,
+            'received_by'    => null,
+        ]);
+
+        $this->refreshPaymentStatus($invoice);
+
+        return $payment;
+    }
+
+    /**
+     * Mark a draft invoice as "sent" (payment link shared with the parent).
+     */
+    public function markSent(Invoice $invoice): void
+    {
+        if ($invoice->status === 'draft') {
+            $invoice->update(['status' => 'sent']);
+        }
+    }
+
+    /**
+     * Recalculate status after a payment:
+     * fully paid → paid; part paid → partially_paid (an overdue invoice stays overdue until settled).
+     */
+    public function refreshPaymentStatus(Invoice $invoice): void
+    {
+        $invoice->refresh();
+
+        if (!$invoice->is_open) {
+            return;
+        }
+
+        $totalPaid = (float) $invoice->payments()->sum('paid_amount');
+
+        if ($totalPaid >= (float) $invoice->total_amount) {
+            $invoice->update(['status' => 'paid']);
+        } elseif ($totalPaid > 0 && $invoice->status !== 'overdue') {
+            $invoice->update(['status' => 'partially_paid']);
+        }
     }
 
     /**

@@ -54,6 +54,19 @@
         </a>
     </div>
 
+    <div class="pp-card pp-menu py-1">
+        <a href="{{ route('privacy-policy') }}">
+            <span class="pp-icon-bubble"><i class="bi bi-shield-check"></i></span>
+            Privacy policy
+            <i class="bi bi-chevron-right"></i>
+        </a>
+        <a href="{{ route('account-deletion.show') }}" class="text-danger">
+            <span class="pp-icon-bubble bg-danger-subtle text-danger"><i class="bi bi-person-x"></i></span>
+            Delete account
+            <i class="bi bi-chevron-right"></i>
+        </a>
+    </div>
+
     <form method="POST" action="{{ route('logout') }}" data-pp-logout>
         @csrf
         <button type="submit" class="btn btn-outline-danger pp-btn-lg w-100">

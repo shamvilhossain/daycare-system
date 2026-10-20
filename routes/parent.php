@@ -34,6 +34,8 @@ Route::middleware(['auth', 'role:parent', 'parent.child'])
         Route::get('/fees', [FeeController::class, 'index'])->name('fees.index');
         Route::get('/fees/{invoice}', [FeeController::class, 'show'])->name('fees.show')->whereNumber('invoice');
         Route::get('/fees/{invoice}/pay', [FeeController::class, 'pay'])->name('fees.pay')->whereNumber('invoice');
+        Route::post('/fees/{invoice}/pay', [FeeController::class, 'startPayment'])
+            ->name('fees.pay.start')->whereNumber('invoice')->middleware('throttle:10,1');
 
         Route::get('/notices', NoticeController::class)->name('notices');
         Route::get('/profile', ProfileController::class)->name('profile');

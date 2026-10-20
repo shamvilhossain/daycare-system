@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Parent;
 
 use App\Models\Invoice;
+use App\Services\Payments\SslCommerzService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use RuntimeException;
 
 class FeeController extends ParentController
 {
@@ -26,7 +29,7 @@ class FeeController extends ParentController
             ? $this->invoiceQuery($request)
                 ->with('payments')
                 ->where('child_id', $child->id)
-                ->whereIn('status', ['draft', 'overdue'])
+                ->whereIn('status', Invoice::OPEN_STATUSES)
                 ->get()
                 ->sum(fn (Invoice $invoice) => $invoice->balance_due)
             : 0;
@@ -43,17 +46,30 @@ class FeeController extends ParentController
         return view('parent.fees.show', compact('invoice'));
     }
 
-    public function pay(Request $request, int $invoice): View
+    public function pay(Request $request, int $invoice, SslCommerzService $gateway): View
     {
         $invoice = $this->invoiceQuery($request)
             ->with(['child', 'payments'])
             ->where('status', '!=', 'cancelled')
             ->findOrFail($invoice);
 
-        // Online gateway (bKash / Nagad / SSLCommerz via payment_channels) is not wired yet.
-        $onlinePaymentEnabled = false;
+        $onlinePaymentEnabled = $gateway->isEnabled();
+        $payableAmount = $gateway->payableAmount($invoice);
 
-        return view('parent.fees.pay', compact('invoice', 'onlinePaymentEnabled'));
+        return view('parent.fees.pay', compact('invoice', 'onlinePaymentEnabled', 'payableAmount'));
+    }
+
+    public function startPayment(Request $request, int $invoice, SslCommerzService $gateway): RedirectResponse
+    {
+        $data = $request->validate(['method' => ['required', 'in:' . implode(',', array_keys(SslCommerzService::METHODS))]]);
+
+        $invoice = $this->invoiceQuery($request)->findOrFail($invoice);
+
+        try {
+            return redirect()->away($gateway->initiate($invoice, $data['method']));
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     /**

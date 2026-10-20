@@ -24,20 +24,15 @@
     @else
         <div class="pp-card">
             <div class="pp-card-title"><i class="bi bi-phone"></i> Pay online</div>
-            @foreach (['bKash', 'Nagad', 'Card / Internet banking'] as $method)
-                <div class="d-flex align-items-center gap-3 py-2 opacity-50">
-                    <span class="pp-icon-bubble"><i class="bi bi-wallet2"></i></span>
-                    <span class="fw-semibold flex-grow-1">{{ $method }}</span>
-                    @unless ($onlinePaymentEnabled)
-                        <span class="pp-chip">Coming soon</span>
-                    @endunless
+            @if ($onlinePaymentEnabled && $payableAmount !== null)
+                @include('payments._methods', ['action' => route('parent.fees.pay.start', $invoice->id), 'amount' => $payableAmount])
+            @elseif ($onlinePaymentEnabled)
+                <div class="small text-muted">
+                    Online payment needs at least ৳{{ config('payments.min_amount') }}. Please pay this amount at the front desk.
                 </div>
-            @endforeach
-
-            {{-- TODO: post to the payment gateway initiate route once payment_channels is wired up. --}}
-            <button type="button" class="btn btn-primary pp-btn-lg w-100 mt-3" @disabled(!$onlinePaymentEnabled)>
-                <i class="bi bi-lock me-1"></i> Pay ৳{{ number_format($invoice->balance_due, 2) }}
-            </button>
+            @else
+                <div class="small text-muted">Online payment is not available right now.</div>
+            @endif
         </div>
 
         <div class="pp-card d-flex gap-3">
