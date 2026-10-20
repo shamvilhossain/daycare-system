@@ -14,60 +14,23 @@
         
         .page-banner {
             background: linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #14b8a6 100%);
-            border-radius: 16px; 
-            padding: 1.75rem 2rem; 
-            color: #fff; 
-            margin-bottom: 1.5rem;
-            position: relative; 
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(13, 148, 136, 0.2);
-        }
-        .page-banner::before {
-            content: ''; position: absolute; top: -50px; right: -30px;
-            width: 170px; height: 170px; border-radius: 50%; background: rgba(255,255,255,0.08);
-            pointer-events: none;
-        }
-        .page-banner::after {
-            content: ''; position: absolute; bottom: -30px; left: 45%;
-            width: 130px; height: 130px; border-radius: 50%; background: rgba(255,255,255,0.05);
-            pointer-events: none;
-        }
-        .page-banner h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.35rem; position: relative; z-index: 1; }
-        .page-banner p { font-size: 0.92rem; opacity: 0.9; position: relative; z-index: 1; margin: 0; }
-
-        /* Executive Summary Top Row Ribbon */
-        .summary-ribbon {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.25);
             border-radius: 12px;
             padding: 0.75rem 1.25rem;
-            margin-top: 1.25rem;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 1.5rem;
-            font-size: 0.9rem;
+            color: #fff;
+            margin-bottom: 0.75rem;
             position: relative;
-            z-index: 1;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(13, 148, 136, 0.15);
         }
-        .summary-ribbon-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+        .page-banner::before {
+            content: ''; position: absolute; top: -35px; right: -25px;
+            width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.08);
+            pointer-events: none;
         }
-        .summary-ribbon-item .label {
-            opacity: 0.85;
-            font-weight: 500;
-        }
-        .summary-ribbon-item .value {
-            font-weight: 700;
-            font-size: 1.05rem;
-        }
-        .summary-ribbon-separator {
-            opacity: 0.4;
-            font-weight: 300;
-        }
+        .page-banner > * { position: relative; z-index: 1; }
+        .page-banner h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.1rem; }
+        .page-banner p { font-size: 0.82rem; opacity: 0.88; margin: 0; }
+        .page-banner .btn { padding: 0.35rem 0.85rem; font-size: 0.85rem; }
 
         /* Metric Cards */
         .stat-card {
@@ -207,44 +170,21 @@
 
         {{-- Main Content --}}
         <main class="app-main">
-            <div class="app-content-header">
+            <div class="app-content-header pt-2 pb-0">
                 <div class="container-fluid">
-                    <div class="page-banner d-flex flex-column justify-content-between">
-                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div class="page-banner">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                             <div>
                                 <h2><i class="bi bi-cash-stack me-2"></i>Billing / Revenue Report</h2>
-                                <p>Comprehensive revenue breakdown: What's invoiced vs. collected across daycare, therapy, and mixed programs</p>
+                                <p>Invoiced vs. collected across daycare, therapy and mixed programs</p>
                             </div>
                             <div class="d-flex gap-2 no-print">
-                                <button type="button" onclick="window.print()" class="btn btn-light fw-bold shadow-sm">
+                                <a href="{{ route('admin.reports.billing-revenue', array_merge(request()->except(['page', 'export']), ['print' => 1])) }}" target="_blank" rel="noopener" class="btn btn-light fw-bold shadow-sm" title="Print-ready report with all filtered invoices">
                                     <i class="bi bi-printer me-1"></i> Print Report
-                                </button>
+                                </a>
                                 <a href="{{ route('admin.reports.billing-revenue', array_merge(request()->query(), ['export' => 'csv'])) }}" class="btn btn-warning fw-bold shadow-sm text-dark">
                                     <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
                                 </a>
-                            </div>
-                        </div>
-
-                        {{-- Prominent Summary Row at Top --}}
-                        <div class="summary-ribbon">
-                            <div class="summary-ribbon-item">
-                                <span class="label"><i class="bi bi-receipt me-1"></i>Total Invoiced:</span>
-                                <span class="value">৳{{ number_format($summary['total_invoiced'], 2) }}</span>
-                            </div>
-                            <span class="summary-ribbon-separator">·</span>
-                            <div class="summary-ribbon-item">
-                                <span class="label"><i class="bi bi-check2-circle me-1"></i>Total Collected:</span>
-                                <span class="value text-warning-light">৳{{ number_format($summary['total_collected'], 2) }}</span>
-                            </div>
-                            <span class="summary-ribbon-separator">·</span>
-                            <div class="summary-ribbon-item">
-                                <span class="label"><i class="bi bi-hourglass-split me-1"></i>Total Outstanding:</span>
-                                <span class="value">৳{{ number_format($summary['total_outstanding'], 2) }}</span>
-                            </div>
-                            <span class="summary-ribbon-separator">·</span>
-                            <div class="summary-ribbon-item">
-                                <span class="label"><i class="bi bi-pie-chart me-1"></i>Collection Rate:</span>
-                                <span class="value">{{ number_format($summary['collection_rate'], 1) }}%</span>
                             </div>
                         </div>
                     </div>

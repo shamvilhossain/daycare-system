@@ -12,6 +12,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ChildController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\InvoiceItemPresetController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\TherapySessionController;
@@ -156,9 +157,19 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role_or_permission:admin|invoices.view-any|invoices.view')->group(function () {
         Route::get('/admin/invoices/get-children', [InvoiceController::class, 'getChildrenByParent'])->name('admin.invoices.get-children');
         Route::get('/admin/invoices/get-therapy-sessions', [InvoiceController::class, 'getBillableTherapySessions'])->name('admin.invoices.get-therapy-sessions');
+        Route::get('/admin/invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('admin.invoices.pdf');
         Route::resource('/admin/invoices', InvoiceController::class, ['as' => 'admin'])->except(['edit', 'update']);
         Route::post('/admin/invoices/{invoice}/payments', [InvoiceController::class, 'addPayment'])->name('admin.invoices.add-payment');
         Route::patch('/admin/invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('admin.invoices.cancel');
+    });
+
+    // Invoice item catalog (Description dropdown on the create-invoice form)
+    Route::middleware('role_or_permission:admin|invoices.create')->group(function () {
+        Route::get('/admin/invoice-items', [InvoiceItemPresetController::class, 'index'])->name('admin.invoice-item-presets.index');
+        Route::post('/admin/invoice-items', [InvoiceItemPresetController::class, 'store'])->name('admin.invoice-item-presets.store');
+        Route::put('/admin/invoice-items/{invoiceItemPreset}', [InvoiceItemPresetController::class, 'update'])->name('admin.invoice-item-presets.update');
+        Route::patch('/admin/invoice-items/{invoiceItemPreset}/toggle', [InvoiceItemPresetController::class, 'toggle'])->name('admin.invoice-item-presets.toggle');
+        Route::delete('/admin/invoice-items/{invoiceItemPreset}', [InvoiceItemPresetController::class, 'destroy'])->name('admin.invoice-item-presets.destroy');
     });
 
     // Announcement management

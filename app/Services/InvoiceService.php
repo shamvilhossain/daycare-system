@@ -2,7 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\ChildTherapyPackage;
 use App\Models\Invoice;
+use App\Models\InvoiceItemPreset;
+use App\Models\TherapyPackage;
 use App\Models\TherapySession;
 use App\Models\Payment;
 use App\Models\User;
@@ -58,17 +61,29 @@ class InvoiceService
                 'status'         => 'draft',
             ]);
 
-            // Create manual line items (daycare tuition, fees, etc.)
+            // Create manual line items (daycare tuition, fees, therapy packages, single sessions)
             if (!empty($data['items'])) {
                 foreach ($data['items'] as $item) {
+                    $childPackageId = !empty($item['therapy_package_id'])
+                        ? $this->purchaseTherapyPackage($invoice, (int) $item['therapy_package_id'], (float) $item['amount'])->id
+                        : null;
+
                     $invoice->items()->create([
-                        'description' => $item['description'],
-                        'quantity'    => 1,
-                        'unit_price'  => $item['amount'],
-                        'amount'      => $item['amount'],
+                        'child_therapy_package_id' => $childPackageId,
+                        'description'              => $item['description'],
+                        'quantity'                 => 1,
+                        'unit_price'               => $item['amount'],
+                        'amount'                   => $item['amount'],
                     ]);
                 }
             }
+
+            // Remember free-text item names for the Description dropdown next time
+            // (therapy packages / sessions come from their own catalogs)
+            $this->rememberItemPresets(array_filter(
+                $data['items'] ?? [],
+                fn ($item) => empty($item['therapy_package_id']) && empty($item['therapy_service_id'])
+            ));
 
             // Optionally attach completed therapy sessions
             if (!empty($data['therapy_session_ids'])) {
@@ -77,6 +92,60 @@ class InvoiceService
 
             return $invoice;
         });
+    }
+
+    /**
+     * Buy a therapy package for the invoice's child — same as Therapy Packages → Purchase,
+     * but billed on this invoice: the package's session balance starts tracking now.
+     */
+    protected function purchaseTherapyPackage(Invoice $invoice, int $therapyPackageId, float $price): ChildTherapyPackage
+    {
+        $package = TherapyPackage::with('items')->findOrFail($therapyPackageId);
+
+        $childPackage = ChildTherapyPackage::create([
+            'child_id'           => $invoice->child_id,
+            'therapy_package_id' => $package->id,
+            'purchase_price'     => $price,
+            'purchased_at'       => $invoice->invoice_date,
+            'expires_at'         => null,
+            'status'             => 'active',
+            'invoice_id'         => $invoice->id,
+        ]);
+
+        // Snapshot package composition at purchase time
+        foreach ($package->items as $item) {
+            $childPackage->items()->create([
+                'therapy_service_id' => $item->therapy_service_id,
+                'sessions_included'  => $item->session_count,
+            ]);
+        }
+
+        return $childPackage;
+    }
+
+    /**
+     * Add/refresh catalog entries for manual line items: new names are added,
+     * existing ones get their usage count and default amount updated.
+     * A hidden entry typed again is shown in the dropdown again.
+     */
+    protected function rememberItemPresets(array $items): void
+    {
+        foreach ($items as $item) {
+            $name = InvoiceItemPreset::normalizeName($item['description'] ?? '');
+            if ($name === '') {
+                continue;
+            }
+
+            $preset = InvoiceItemPreset::whereRaw('LOWER(name) = ?', [mb_strtolower($name)])->first()
+                ?? new InvoiceItemPreset(['name' => $name, 'usage_count' => 0]);
+
+            $preset->fill([
+                'default_amount' => $item['amount'],
+                'usage_count'    => $preset->usage_count + 1,
+                'last_used_at'   => now(),
+                'is_active'      => true,
+            ])->save();
+        }
     }
 
     /**
@@ -211,6 +280,20 @@ class InvoiceService
      */
     public function cancelInvoice(Invoice $invoice): void
     {
-        $invoice->update(['status' => 'cancelled']);
+        DB::transaction(function () use ($invoice) {
+            $invoice->update(['status' => 'cancelled']);
+            $this->cancelPackagesBilledOn($invoice);
+        });
+    }
+
+    /**
+     * Therapy packages bought on this invoice are cancelled with it (sessions already
+     * used stay recorded; the package just stops offering its remaining balance).
+     */
+    public function cancelPackagesBilledOn(Invoice $invoice): void
+    {
+        ChildTherapyPackage::where('invoice_id', $invoice->id)
+            ->where('status', 'active')
+            ->update(['status' => 'cancelled']);
     }
 }

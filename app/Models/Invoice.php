@@ -70,8 +70,10 @@ class Invoice extends Model
             return 'daycare';
         }
 
-        $hasTherapy = $items->contains(fn($item) => !is_null($item->therapy_session_id));
-        $hasDaycare = $items->contains(fn($item) => is_null($item->therapy_session_id));
+        // Therapy = a billed session or a therapy package bought on this invoice
+        $isTherapy = fn ($item) => !is_null($item->therapy_session_id) || !is_null($item->child_therapy_package_id);
+        $hasTherapy = $items->contains($isTherapy);
+        $hasDaycare = $items->contains(fn ($item) => !$isTherapy($item));
 
         if ($hasTherapy && $hasDaycare) {
             return 'mixed';

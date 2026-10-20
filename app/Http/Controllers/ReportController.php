@@ -218,14 +218,15 @@ class ReportController extends Controller
 
         // Filter by Type (daycare / therapy / mixed)
         $type = $request->input('type');
+        // Therapy item = billed session or therapy package bought on the invoice
+        $therapyItem = fn ($q) => $q->where(fn ($w) => $w->whereNotNull('therapy_session_id')->orWhereNotNull('child_therapy_package_id'));
+        $daycareItem = fn ($q) => $q->whereNull('therapy_session_id')->whereNull('child_therapy_package_id');
         if ($type === 'therapy') {
-            $query->whereHas('items', fn($q) => $q->whereNotNull('therapy_session_id'))
-                  ->whereDoesntHave('items', fn($q) => $q->whereNull('therapy_session_id'));
+            $query->whereHas('items', $therapyItem)->whereDoesntHave('items', $daycareItem);
         } elseif ($type === 'daycare') {
-            $query->whereDoesntHave('items', fn($q) => $q->whereNotNull('therapy_session_id'));
+            $query->whereDoesntHave('items', $therapyItem);
         } elseif ($type === 'mixed') {
-            $query->whereHas('items', fn($q) => $q->whereNotNull('therapy_session_id'))
-                  ->whereHas('items', fn($q) => $q->whereNull('therapy_session_id'));
+            $query->whereHas('items', $therapyItem)->whereHas('items', $daycareItem);
         }
 
         // Export to CSV if requested
@@ -238,11 +239,14 @@ class ReportController extends Controller
         $nonCancelledInvoices = $summaryInvoices->where('status', '!=', 'cancelled');
 
         $totalInvoiced = (float) $nonCancelledInvoices->sum('total_amount');
+        // All money received, including payments on invoices that were later cancelled
         $totalCollected = (float) $summaryInvoices->sum(function ($inv) {
             return (float) $inv->payments->sum('paid_amount');
         });
-        $totalOutstanding = max(0, $totalInvoiced - $totalCollected);
-        $collectionRate = $totalInvoiced > 0 ? round(($totalCollected / $totalInvoiced) * 100, 1) : 0.0;
+        // Still owed = balances of non-cancelled invoices (payments on cancelled invoices don't reduce it)
+        $totalOutstanding = (float) $nonCancelledInvoices->sum(fn ($inv) => $inv->balance_due);
+        $collectedOnActive = (float) $nonCancelledInvoices->sum(fn ($inv) => $inv->paid_total);
+        $collectionRate = $totalInvoiced > 0 ? round(min($collectedOnActive, $totalInvoiced) / $totalInvoiced * 100, 1) : 0.0;
 
         $summary = [
             'total_invoiced'    => $totalInvoiced,
@@ -257,6 +261,11 @@ class ReportController extends Controller
             'cancelled_count'   => $summaryInvoices->where('status', 'cancelled')->count(),
         ];
 
+        // Print-ready document: ALL filtered rows (not just the current page)
+        if ($request->boolean('print')) {
+            return $this->billingRevenuePrint($request, $summaryInvoices, $summary);
+        }
+
         $invoices = $query->orderBy('invoice_date', 'desc')
             ->orderBy('id', 'desc')
             ->paginate(20)
@@ -270,6 +279,66 @@ class ReportController extends Controller
             'type',
             'status'
         ));
+    }
+
+    /**
+     * Standalone print layout for the billing / revenue report.
+     */
+    protected function billingRevenuePrint(Request $request, $invoices, array $summary)
+    {
+        $rows = $invoices->sortBy([['invoice_date', 'desc'], ['id', 'desc']])->values();
+        $isCounted = fn ($inv) => $inv->status !== 'cancelled';
+
+        $byStatus = collect(Invoice::STATUSES)->map(function ($status) use ($rows) {
+            $set = $rows->where('status', $status);
+            return [
+                'label'  => ucwords(str_replace('_', ' ', $status)),
+                'status' => $status,
+                'count'  => $set->count(),
+                'amount' => (float) $set->sum('total_amount'),
+                'paid'   => (float) $set->sum(fn ($i) => $i->paid_total),
+            ];
+        })->filter(fn ($s) => $s['count'] > 0)->values();
+
+        $byType = collect(['daycare' => 'Daycare', 'therapy' => 'Therapy', 'mixed' => 'Mixed'])->map(function ($label, $type) use ($rows, $isCounted, $summary) {
+            $set = $rows->filter(fn ($i) => $i->invoice_type === $type);
+            $invoiced = (float) $set->filter($isCounted)->sum('total_amount');
+            $collected = (float) $set->sum(fn ($i) => $i->paid_total);
+            return [
+                'label'     => $label,
+                'count'     => $set->count(),
+                'invoiced'  => $invoiced,
+                'collected' => $collected,
+                'share'     => $summary['total_invoiced'] > 0 ? round($invoiced / $summary['total_invoiced'] * 100, 1) : 0,
+            ];
+        })->filter(fn ($t) => $t['count'] > 0)->values();
+
+        $filters = collect([
+            'Period' => match (true) {
+                $request->filled('from_date') && $request->filled('to_date') => Carbon::parse($request->from_date)->format('M d, Y') . ' – ' . Carbon::parse($request->to_date)->format('M d, Y'),
+                $request->filled('from_date') => 'From ' . Carbon::parse($request->from_date)->format('M d, Y'),
+                $request->filled('to_date')   => 'Up to ' . Carbon::parse($request->to_date)->format('M d, Y'),
+                default => 'All dates',
+            },
+            'Type'   => $request->filled('type') ? ucfirst($request->type) : 'All types',
+            'Status' => $request->filled('status') ? ucwords(str_replace('_', ' ', $request->status)) : 'All statuses',
+            'Search' => $request->input('search'),
+        ])->filter();
+
+        return view('admin.reports.billing-revenue-print', [
+            'rows'        => $rows,
+            'summary'     => $summary,
+            'byStatus'    => $byStatus,
+            'byType'      => $byType,
+            'filters'     => $filters,
+            'org'         => config('parentapp.organization'),
+            'generatedBy' => $request->user()?->name,
+            'totals'      => [
+                'amount'  => (float) $rows->filter($isCounted)->sum('total_amount'),
+                'paid'    => (float) $rows->sum(fn ($i) => $i->paid_total),
+                'balance' => (float) $rows->filter($isCounted)->sum(fn ($i) => $i->balance_due),
+            ],
+        ]);
     }
 
     /**

@@ -109,7 +109,7 @@
                     @endif
                     @if ($canInvoices)
                     <li class="nav-item">
-                        <a href="{{ route('admin.invoices.index') }}" class="nav-link {{ request()->routeIs('admin.invoices.*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.invoices.index') }}" class="nav-link {{ request()->routeIs('admin.invoices.*', 'admin.invoice-item-presets.*') ? 'active' : '' }}">
                             <i class="nav-icon bi bi-receipt-cutoff"></i>
                             <p>Invoices & Payments</p>
                         </a>

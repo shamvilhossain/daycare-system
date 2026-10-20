@@ -263,9 +263,17 @@
                                                 <td>{{ $invoice->invoice_date->format('M d, Y') }}</td>
                                                 <td>{{ $invoice->due_date->format('M d, Y') }}</td>
                                                 <td class="text-center">
-                                                    <a href="{{ route('admin.invoices.show', $invoice) }}" class="btn btn-sm btn-outline-primary" title="View">
-                                                        <i class="bi bi-eye"></i>
-                                                    </a>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a href="{{ route('admin.invoices.show', $invoice) }}" class="btn btn-outline-primary" title="View">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                        <a href="{{ route('admin.invoices.show', ['invoice' => $invoice, 'print' => 1]) }}" target="_blank" rel="noopener" class="btn btn-outline-secondary" title="Print">
+                                                            <i class="bi bi-printer"></i>
+                                                        </a>
+                                                        <a href="{{ route('admin.invoices.pdf', $invoice) }}" class="btn btn-outline-danger" title="Download PDF">
+                                                            <i class="bi bi-file-earmark-pdf"></i>
+                                                        </a>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         @empty

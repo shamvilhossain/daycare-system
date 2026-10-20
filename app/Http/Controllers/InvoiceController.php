@@ -4,12 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Traits\ScopesForParent;
 use App\Models\Invoice;
+use App\Models\InvoiceItemPreset;
 use App\Models\Child;
+use App\Models\TherapyPackage;
+use App\Models\TherapyService;
 use App\Models\TherapySession;
 use App\Models\ParentProfile;
 use App\Services\InvoiceService;
+use App\Services\InvoicePdfService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
 {
@@ -93,7 +98,41 @@ class InvoiceController extends Controller
         }
 
         $parents = ParentProfile::orderBy('first_name')->get();
-        return view('admin.invoices.create', compact('parents'));
+        return view('admin.invoices.create', [
+            'parents'     => $parents,
+            'itemCatalog' => $this->itemCatalog(),
+        ]);
+    }
+
+    /**
+     * Options for the line-item Description dropdown: saved free-text items,
+     * therapy packages (bought for the child on save) and single therapy sessions.
+     */
+    private function itemCatalog(): array
+    {
+        $presets = InvoiceItemPreset::forDropdown()->get()->map(fn ($p) => [
+            'kind'   => 'preset',
+            'name'   => $p->name,
+            'amount' => $p->default_amount !== null ? (float) $p->default_amount : null,
+        ]);
+
+        $packages = TherapyPackage::where('is_active', true)->with('items.service')->orderBy('name')->get()->map(fn ($p) => [
+            'kind'   => 'package',
+            'id'     => $p->id,
+            'name'   => $p->name,
+            'amount' => (float) $p->price,
+            'detail' => $p->items->map(fn ($i) => $i->session_count . '× ' . ($i->service?->name ?? 'session'))->implode(' + '),
+        ]);
+
+        $services = TherapyService::where('is_active', true)->orderBy('name')->get()->map(fn ($s) => [
+            'kind'   => 'service',
+            'id'     => $s->id,
+            'name'   => $s->name . ' — single session',
+            'amount' => (float) $s->session_rate,
+            'detail' => strtoupper($s->therapy_type) . ' · ' . $s->duration_minutes . ' min',
+        ]);
+
+        return $presets->concat($packages)->concat($services)->values()->all();
     }
 
     /**
@@ -113,6 +152,8 @@ class InvoiceController extends Controller
             'items'                  => 'nullable|array',
             'items.*.description'    => 'required_with:items|string|max:255',
             'items.*.amount'         => 'required_with:items|numeric|min:0.01',
+            'items.*.therapy_package_id' => 'nullable|integer|exists:therapy_packages,id',
+            'items.*.therapy_service_id' => 'nullable|integer|exists:therapy_services,id',
             'therapy_session_ids'    => 'nullable|array',
             'therapy_session_ids.*'  => 'exists:therapy_sessions,id',
         ]);
@@ -141,6 +182,23 @@ class InvoiceController extends Controller
 
         $invoice->load(['parent', 'child', 'items', 'payments.receivedBy', 'onlineTransactions']);
         return view('admin.invoices.show', compact('invoice'));
+    }
+
+    /**
+     * Download the invoice as a PDF (same access rule as show()).
+     */
+    public function pdf(Invoice $invoice, InvoicePdfService $pdf)
+    {
+        $parentProfileId = $this->getParentProfileId();
+        if ($parentProfileId !== null && $invoice->parent_id !== $parentProfileId) {
+            abort(403, 'You do not have access to this invoice.');
+        }
+
+        return response($pdf->render($invoice), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $pdf->filename($invoice) . '"',
+            'Cache-Control'       => 'private, no-store',
+        ]);
     }
 
     /**
@@ -195,7 +253,11 @@ class InvoiceController extends Controller
             abort(403);
         }
 
-        $invoice->delete();
+        DB::transaction(function () use ($invoice) {
+            // Packages bought on this invoice would otherwise stay active but unbilled
+            $this->invoiceService->cancelPackagesBilledOn($invoice);
+            $invoice->delete();
+        });
 
         return redirect()->route('admin.invoices.index')
             ->with('success', 'Invoice deleted successfully.');
@@ -227,6 +289,7 @@ class InvoiceController extends Controller
         $sessions = TherapySession::with(['service', 'therapist'])
             ->where('child_id', $request->child_id)
             ->where('status', 'completed')
+            ->whereNull('child_therapy_package_id') // prepaid via a therapy package — never bill again
             ->whereDoesntHave('invoiceItem') // skip already-billed sessions
             ->orderBy('session_date', 'desc')
             ->get()
