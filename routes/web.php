@@ -11,6 +11,7 @@ use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ChildController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceItemPresetController;
 use App\Http\Controllers\AnnouncementController;
@@ -20,21 +21,10 @@ use App\Http\Controllers\TherapyServiceController;
 use App\Http\Controllers\TherapyPackageController;
 use App\Http\Controllers\ChildTherapyPackageController;
 use App\Http\Controllers\ChildSafetyCardController;
-use App\Models\Announcement;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
-Route::get('/', function () {
-    $announcements = Announcement::whereIn('audience', ['parents', 'all'])
-        ->where('expires_at', '>', now())
-        ->where(function ($query) {
-            $query->whereNull('published_at')->orWhere('published_at', '<=', now());
-        })
-        ->orderByRaw('CASE WHEN published_at IS NULL THEN created_at ELSE published_at END DESC')
-        ->get();
-
-    return view('welcome', compact('announcements'));
-});
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
