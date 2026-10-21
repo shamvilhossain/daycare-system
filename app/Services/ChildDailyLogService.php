@@ -223,6 +223,10 @@ class ChildDailyLogService
             $data['meal_type'] = null;
             $data['items_served'] = null;
             $data['amount_eaten'] = null;
+        }
+
+        // quality = appetite (meal/bottle), sleep quality (nap) or engagement (activity)
+        if (!in_array($type, ['meal', 'bottle', 'nap', 'activity'])) {
             $data['quality'] = null;
         }
 

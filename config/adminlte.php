@@ -138,12 +138,14 @@ return [
     // Bundled demo/showcase pages (Dashboard v2/v3, Widgets, UI, Forms, Tables,
     // Layout Options, Theme Generate, auth variants, error pages). Set false to
     // skip registering their routes in production.
-    'demo' => true,
+    // Off by default (UAT SEC-06); set ADMINLTE_DEMO=true locally to browse them.
+    'demo' => env('ADMINLTE_DEMO', false),
     'demo_middleware' => ['web', 'auth'],
 
     // In-app documentation viewer: renders this package's docs/*.md files at
     // /docs and /docs/{page}. Set 'docs' => false to disable the route.
-    'docs' => true,
+    // Off by default — it is public (no auth); set ADMINLTE_DOCS=true locally if needed.
+    'docs' => env('ADMINLTE_DOCS', false),
     'docs_middleware' => ['web'],
 
     'sidebar_breakpoint' => 'lg',     // sidebar-expand-{breakpoint}

@@ -196,6 +196,7 @@
                                     <tr>
                                         <th>Child Name</th>
                                         <th>Participation Status</th>
+                                        <th>Engagement</th>
                                         <th>Child Specific Notes</th>
                                         <th class="text-end">Action</th>
                                     </tr>
@@ -205,13 +206,20 @@
                                         <tr>
                                             <td>
                                                 <div class="fw-bold text-dark">{{ $log->child ? $log->child->full_name : "Child #{$log->child_id}" }}</div>
-                                                <small class="text-muted">{{ $log->child && $log->child->dob ? $log->child->dob->age . ' yrs' : '' }}</small>
+                                                <small class="text-muted">{{ $log->child?->date_of_birth ? $log->child->formatted_age : '' }}</small>
                                             </td>
                                             <td>
                                                 @if($log->is_completed)
                                                     <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-lg"></i> Completed</span>
                                                 @else
                                                     <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Partial / In progress</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($log->quality)
+                                                    <span class="badge {{ $log->quality_badge_class }}">{{ ucfirst($log->quality) }}</span>
+                                                @else
+                                                    <span class="text-muted small">—</span>
                                                 @endif
                                             </td>
                                             <td>
@@ -227,7 +235,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="4" class="text-center py-4 text-muted">
+                                            <td colspan="5" class="text-center py-4 text-muted">
                                                 No child daily logs have been tagged to this session occurrence yet.
                                                 <div class="small mt-1">When staff record an 'activity' entry in the Child Daily Log desk, selecting this activity session will automatically link them here.</div>
                                             </td>

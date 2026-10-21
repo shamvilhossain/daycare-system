@@ -267,11 +267,18 @@
                                                         @elseif ($log->log_type === 'activity')
                                                             <div class="small">
                                                                 @if ($log->activityOccurrence && $log->activityOccurrence->activity)
-                                                                    <span class="badge bg-primary text-white">{{ $log->activityOccurrence->activity->title }}</span>
+                                                                    <span class="badge bg-primary text-white">{{ $log->activityOccurrence->activity->name }}</span>
                                                                 @endif
                                                                 @if ($log->is_completed)
                                                                     <span class="badge bg-success-subtle text-success">Completed</span>
                                                                 @endif
+                                                                @if ($log->quality)
+                                                                    <span class="badge {{ $log->quality_badge_class }}">Engagement: {{ ucfirst($log->quality) }}</span>
+                                                                @endif
+                                                            </div>
+                                                        @elseif ($log->log_type === 'nap' && $log->quality)
+                                                            <div class="small">
+                                                                <span class="badge {{ $log->quality_badge_class }}">Sleep Quality: {{ ucfirst($log->quality) }}</span>
                                                             </div>
                                                         @endif
                                                         @if ($log->notes)
@@ -373,24 +380,13 @@
                                 </select>
                             </div>
                             <div class="col-6">
-                                <label class="form-label fw-semibold">Appetite / Quality</label>
-                                <select name="quality" id="modalQuality" class="form-select">
-                                    <option value="good" selected>Good</option>
-                                    <option value="fair">Fair</option>
-                                    <option value="poor">Poor</option>
-                                    <option value="refused">Refused</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="row g-2 mb-3">
-                            <div class="col-6">
                                 <label class="form-label fw-semibold">Amount Eaten</label>
                                 <input type="text" name="amount_eaten" id="modalAmountEaten" class="form-control" placeholder="e.g. All, Most, Half, 6 oz">
                             </div>
-                            <div class="col-6">
-                                <label class="form-label fw-semibold">Items Served</label>
-                                <input type="text" name="items_served" id="modalItemsServed" class="form-control" placeholder="e.g. Pasta, apple slices">
-                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Items Served</label>
+                            <input type="text" name="items_served" id="modalItemsServed" class="form-control" placeholder="e.g. Pasta, apple slices">
                         </div>
                     </div>
 
@@ -402,7 +398,7 @@
                                 <option value="">Select Scheduled Activity (or leave empty)...</option>
                                 @foreach ($occurrences ?? [] as $occ)
                                     <option value="{{ $occ->id }}">
-                                        {{ $occ->activity->title }} ({{ $occ->start_time ? substr($occ->start_time, 0, 5) : 'Anytime' }})
+                                        {{ $occ->activity?->name }} ({{ $occ->start_time ? substr($occ->start_time, 0, 5) : 'Anytime' }})
                                     </option>
                                 @endforeach
                             </select>
@@ -411,6 +407,17 @@
                             <input type="checkbox" name="is_completed" value="1" id="modalIsCompleted" class="form-check-input" checked>
                             <label class="form-check-label fw-semibold" for="modalIsCompleted">Child completed / actively participated in this activity</label>
                         </div>
+                    </div>
+
+                    {{-- Quality (meal appetite / sleep quality / activity engagement) — disabled when hidden so it is never sent by accident --}}
+                    <div id="qualitySection" class="mb-3" style="display: none;">
+                        <label class="form-label fw-semibold" id="qualityLabel" for="modalQuality">Quality</label>
+                        <select name="quality" id="modalQuality" class="form-select" disabled>
+                            <option value="good" selected>Good</option>
+                            <option value="fair">Fair</option>
+                            <option value="poor">Poor</option>
+                            <option value="refused">Refused</option>
+                        </select>
                     </div>
 
                     {{-- Notes --}}
@@ -433,6 +440,15 @@
             const activitySection = document.getElementById('activitySection');
             const notesLabel = document.getElementById('notesLabel');
             const endTimeLabel = document.getElementById('endTimeLabel');
+
+            // Quality applies to meals (appetite), naps (sleep quality) and activities (engagement)
+            const qualityLabels = { meal: 'Appetite', bottle: 'Appetite', nap: 'Sleep Quality', activity: 'Engagement' };
+            const qualitySection = document.getElementById('qualitySection');
+            const qualitySelect = document.getElementById('modalQuality');
+            const showQuality = Object.prototype.hasOwnProperty.call(qualityLabels, type);
+            qualitySection.style.display = showQuality ? 'block' : 'none';
+            qualitySelect.disabled = !showQuality;
+            if (showQuality) document.getElementById('qualityLabel').innerText = qualityLabels[type];
 
             if (type === 'meal' || type === 'bottle') {
                 mealSection.style.display = 'block';

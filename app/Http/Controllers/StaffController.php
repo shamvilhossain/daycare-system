@@ -88,6 +88,7 @@ class StaffController extends Controller
                 'regex:/^(?:\+?88|88)?01[3-9]\d{8}$/',
             ],
             'email'          => 'required|email|max:255|unique:users,email',
+            'password'       => ['required', 'confirmed', Password::min(8)],
             'department'     => 'required|in:daycare,therapy',
             'role'           => [
                 'required',
@@ -201,6 +202,7 @@ class StaffController extends Controller
                 'regex:/^(?:\+?88|88)?01[3-9]\d{8}$/',
             ],
             'email'          => 'required|email|max:255|unique:users,email,' . $staff->user_id,
+            'password'       => ['nullable', 'confirmed', Password::min(8)], // blank = keep current password
             'department'     => 'required|in:daycare,therapy',
             'role'           => [
                 'required',

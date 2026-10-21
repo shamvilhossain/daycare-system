@@ -8,12 +8,33 @@ use Illuminate\Support\Facades\DB;
 
 class AnnouncementController extends Controller
 {
+    /** Audiences a parent may see. Staff-only notices are never shown to parents. */
+    private const PARENT_AUDIENCES = ['parents', 'all'];
+
+    private function isParentViewer(): bool
+    {
+        return (bool) auth()->user()?->hasRole('parent');
+    }
+
+    /** Creating, editing and deleting require announcements.create (admins always pass via Gate::before). */
+    private function authorizeManage(): void
+    {
+        abort_unless(auth()->user()?->can('announcements.create'), 403, 'You are not allowed to manage announcements.');
+    }
+
     /**
      * Display a listing of announcements with search, filters, and statistics.
      */
     public function index(Request $request)
     {
         $query = Announcement::with(['creator', 'staff']);
+        $statsBase = Announcement::query();
+
+        // Parents only see live notices addressed to parents or everyone
+        if ($this->isParentViewer()) {
+            $query->whereIn('audience', self::PARENT_AUDIENCES)->active();
+            $statsBase->whereIn('audience', self::PARENT_AUDIENCES)->active();
+        }
 
         // Search by title or content
         if ($search = $request->input('search')) {
@@ -51,10 +72,10 @@ class AnnouncementController extends Controller
 
         // Statistics
         $stats = [
-            'total'     => Announcement::count(),
-            'active'    => Announcement::active()->count(),
-            'parents'   => Announcement::where('audience', 'parents')->count(),
-            'staff'     => Announcement::where('audience', 'staff')->count(),
+            'total'     => (clone $statsBase)->count(),
+            'active'    => (clone $statsBase)->active()->count(),
+            'parents'   => (clone $statsBase)->where('audience', 'parents')->count(),
+            'staff'     => (clone $statsBase)->where('audience', 'staff')->count(),
         ];
 
         return view('admin.announcements.index', compact('announcements', 'stats'));
@@ -65,6 +86,8 @@ class AnnouncementController extends Controller
      */
     public function create()
     {
+        $this->authorizeManage();
+
         return view('admin.announcements.create');
     }
 
@@ -73,6 +96,8 @@ class AnnouncementController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorizeManage();
+
         $validated = $request->validate([
             'title'        => 'required|string|max:255',
             'content'      => 'required|string',
@@ -102,6 +127,12 @@ class AnnouncementController extends Controller
      */
     public function show(Announcement $announcement)
     {
+        if ($this->isParentViewer()) {
+            $visible = in_array($announcement->audience, self::PARENT_AUDIENCES, true)
+                && Announcement::whereKey($announcement->id)->active()->exists();
+            abort_unless($visible, 404);
+        }
+
         $announcement->load(['creator', 'staff']);
         return view('admin.announcements.show', compact('announcement'));
     }
@@ -111,6 +142,8 @@ class AnnouncementController extends Controller
      */
     public function edit(Announcement $announcement)
     {
+        $this->authorizeManage();
+
         return view('admin.announcements.edit', compact('announcement'));
     }
 
@@ -119,6 +152,8 @@ class AnnouncementController extends Controller
      */
     public function update(Request $request, Announcement $announcement)
     {
+        $this->authorizeManage();
+
         $validated = $request->validate([
             'title'        => 'required|string|max:255',
             'content'      => 'required|string',
@@ -144,6 +179,8 @@ class AnnouncementController extends Controller
      */
     public function destroy(Announcement $announcement)
     {
+        $this->authorizeManage();
+
         DB::transaction(function () use ($announcement) {
             $announcement->delete();
         });

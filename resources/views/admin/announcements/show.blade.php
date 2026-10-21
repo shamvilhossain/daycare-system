@@ -76,9 +76,11 @@
                             <p>View broadcast information, schedule, audience, and ticker status</p>
                         </div>
                         <div class="d-flex gap-2" style="position:relative;z-index:1;">
-                            <a href="{{ route('admin.announcements.edit', $announcement) }}" class="btn btn-light fw-bold shadow-sm">
-                                <i class="bi bi-pencil me-1"></i> Edit
-                            </a>
+                            @can('announcements.create')
+                                <a href="{{ route('admin.announcements.edit', $announcement) }}" class="btn btn-light fw-bold shadow-sm">
+                                    <i class="bi bi-pencil me-1"></i> Edit
+                                </a>
+                            @endcan
                             <a href="{{ route('admin.announcements.index') }}" class="btn btn-outline-light fw-bold shadow-sm">
                                 <i class="bi bi-arrow-left me-1"></i> Back to List
                             </a>
@@ -130,6 +132,7 @@
                                     <a href="{{ route('admin.announcements.index') }}" class="btn btn-outline-secondary">
                                         <i class="bi bi-arrow-left me-1"></i> Back to Announcements
                                     </a>
+                                    @can('announcements.create')
                                     <div class="d-flex gap-2">
                                         <a href="{{ route('admin.announcements.edit', $announcement) }}" class="btn btn-primary" style="background-color: #6366f1; border-color: #6366f1;">
                                             <i class="bi bi-pencil me-1"></i> Edit Announcement
@@ -138,6 +141,7 @@
                                             <i class="bi bi-trash me-1"></i> Delete
                                         </button>
                                     </div>
+                                    @endcan
                                 </div>
                             </div>
                         </div>
@@ -232,6 +236,7 @@
                     </div>
 
                     {{-- Delete Confirmation Modal --}}
+                    @can('announcements.create')
                     <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered text-start">
                             <div class="modal-content">
@@ -253,6 +258,7 @@
                             </div>
                         </div>
                     </div>
+                    @endcan
                 </div>
             </div>
         </main>

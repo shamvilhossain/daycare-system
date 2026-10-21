@@ -181,6 +181,7 @@
                                                 <tr>
                                                     <th>Document</th>
                                                     <th>Type</th>
+                                                    <th>Expiry</th>
                                                     <th>Uploaded</th>
                                                     <th class="text-end">Actions</th>
                                                 </tr>
@@ -201,6 +202,23 @@
                                                         </td>
                                                         <td>
                                                             <span class="badge {{ $doc->doc_type_badge_class }}">{{ $doc->doc_type_label }}</span>
+                                                        </td>
+                                                        <td>
+                                                            @if($doc->expiry_date)
+                                                                @if($doc->is_expired)
+                                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle" title="Expired">
+                                                                        <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ $doc->expiry_date->format('M d, Y') }}
+                                                                    </span>
+                                                                @elseif($doc->expiry_date->lte(now()->addDays(30)))
+                                                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" title="Expires within 30 days">
+                                                                        <i class="bi bi-clock-history me-1"></i>{{ $doc->expiry_date->format('M d, Y') }}
+                                                                    </span>
+                                                                @else
+                                                                    <span class="small text-dark">{{ $doc->expiry_date->format('M d, Y') }}</span>
+                                                                @endif
+                                                            @else
+                                                                <span class="text-muted small">No expiry</span>
+                                                            @endif
                                                         </td>
                                                         <td>
                                                             <span class="text-muted small">{{ $doc->created_at ? $doc->created_at->format('M d, Y') : '—' }}</span>

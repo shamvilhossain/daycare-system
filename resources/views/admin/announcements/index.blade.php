@@ -82,9 +82,11 @@
                             <h2><i class="bi bi-megaphone-fill me-2"></i>Announcements</h2>
                             <p>Broadcast updates to parents, staff, or the entire center with live ticker on the welcome page</p>
                         </div>
-                        <a href="{{ route('admin.announcements.create') }}" class="btn btn-light btn-sm fw-bold shadow-sm px-3" style="position:relative;z-index:1;">
-                            <i class="bi bi-plus-lg me-1"></i> New Announcement
-                        </a>
+                        @can('announcements.create')
+                            <a href="{{ route('admin.announcements.create') }}" class="btn btn-light btn-sm fw-bold shadow-sm px-3" style="position:relative;z-index:1;">
+                                <i class="bi bi-plus-lg me-1"></i> New Announcement
+                            </a>
+                        @endcan
                     </div>
                 </div>
             </div>
@@ -259,14 +261,17 @@
                                                         <a href="{{ route('admin.announcements.show', $announcement) }}" class="btn btn-outline-secondary" title="View details">
                                                             <i class="bi bi-eye"></i>
                                                         </a>
+                                                        @can('announcements.create')
                                                         <a href="{{ route('admin.announcements.edit', $announcement) }}" class="btn btn-outline-secondary" title="Edit">
                                                             <i class="bi bi-pencil"></i>
                                                         </a>
                                                         <button type="button" class="btn btn-outline-danger" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteModal{{ $announcement->id }}">
                                                             <i class="bi bi-trash"></i>
                                                         </button>
+                                                        @endcan
                                                     </div>
 
+                                                    @can('announcements.create')
                                                     {{-- Delete Confirmation Modal --}}
                                                     <div class="modal fade" id="deleteModal{{ $announcement->id }}" tabindex="-1" aria-hidden="true">
                                                         <div class="modal-dialog modal-dialog-centered text-start">
@@ -289,6 +294,7 @@
                                                             </div>
                                                         </div>
                                                     </div>
+                                                    @endcan
                                                 </td>
                                             </tr>
                                         @empty
@@ -298,9 +304,11 @@
                                                         <i class="bi bi-megaphone display-4 d-block mb-3 opacity-25"></i>
                                                         <h5>No announcements found</h5>
                                                         <p class="small mb-3">Try clearing your search filters or publish a new announcement.</p>
+                                                        @can('announcements.create')
                                                         <a href="{{ route('admin.announcements.create') }}" class="btn btn-sm btn-primary" style="background-color: #6366f1; border-color: #6366f1;">
                                                             <i class="bi bi-plus-lg me-1"></i> Create First Announcement
                                                         </a>
+                                                        @endcan
                                                     </div>
                                                 </td>
                                             </tr>
