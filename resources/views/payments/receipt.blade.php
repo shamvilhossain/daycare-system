@@ -7,6 +7,7 @@
     $status = (int) $txn->status;
     [$icon, $color, $headline, $text] = match (true) {
         $status === Txn::STATUS_SUCCESS => ['bi-check-circle-fill', 'text-success', 'Payment successful', 'Thank you! Your payment has been received.'],
+        $txn->is_abandoned => ['bi-x-circle-fill', 'text-secondary', 'Payment not completed', 'This payment was not finished. No money was taken — you can pay again from your payment link or the parent app.'],
         $status === Txn::STATUS_CANCELLED => ['bi-x-circle-fill', 'text-secondary', 'Payment cancelled', 'No money was taken. You can try again any time.'],
         $status === Txn::STATUS_INITIATED => ['bi-hourglass-split', 'text-primary', 'Confirming your payment…', 'We are waiting for confirmation from the payment gateway. This page will refresh automatically.'],
         $status === Txn::STATUS_CALLBACK_RECEIVED => ['bi-shield-exclamation', 'text-warning', 'Payment under review', 'Your payment was received but needs a quick manual check. The office will confirm it shortly.'],
@@ -14,7 +15,7 @@
     };
 @endphp
 
-@if ($status === Txn::STATUS_INITIATED)
+@if ($status === Txn::STATUS_INITIATED && !$txn->is_abandoned)
     @push('head')
         <meta http-equiv="refresh" content="5">
     @endpush
@@ -25,7 +26,7 @@
         <i class="bi {{ $icon }} {{ $color }}" style="font-size: 3.5rem"></i>
         <div class="pp-page-title mt-2">{{ $headline }}</div>
         <div class="text-muted">{{ $text }}</div>
-        @if ($status === Txn::STATUS_INITIATED)
+        @if ($status === Txn::STATUS_INITIATED && !$txn->is_abandoned)
             <div class="spinner-border text-primary mt-3" role="status"></div>
         @endif
     </div>

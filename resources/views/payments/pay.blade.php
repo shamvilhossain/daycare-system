@@ -43,7 +43,7 @@
                 <div>Please pay at the daycare office.</div>
             </div>
         @else
-            <div class="pp-card-title"><i class="bi bi-wallet2"></i> Choose how to pay</div>
+            <div class="pp-card-title"><i class="bi bi-wallet2"></i> Pay online</div>
             @include('payments._methods', ['action' => $formAction, 'amount' => $amount])
         @endif
     </div>
