@@ -157,7 +157,7 @@ class ChildController extends Controller
             abort(403);
         }
 
-        $child->load(['parents', 'documents']);
+        $child->load(['parents', 'documents', 'admissionInvoice']);
         $parents = ParentProfile::orderBy('first_name')->get();
         return view('admin.children.edit', compact('child', 'parents'));
     }
@@ -192,6 +192,8 @@ class ChildController extends Controller
             'documents.*.doc_type'   => 'nullable|in:birth_certificate,custody_agreement,medical_form,other',
             'documents.*.expiry_date'=> 'nullable|date',
             'documents.*.file'       => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,webp|max:10240',
+            'admission_fee_waived'        => 'nullable|boolean',
+            'admission_fee_waiver_reason' => 'nullable|required_if:admission_fee_waived,1|string|max:255',
         ]);
 
         $photoPath = $child->photo_url;
@@ -220,6 +222,15 @@ class ChildController extends Controller
                 'ec_authorized_pickup' => $request->has('ec_authorized_pickup'),
                 'is_active'            => $request->has('is_active'),
             ]);
+
+            // Admission fee waiver (only when the form section was shown)
+            if ($request->has('admission_waiver_form')) {
+                $waived = $request->boolean('admission_fee_waived');
+                $child->update([
+                    'admission_fee_waived_at'     => $waived ? ($child->admission_fee_waived_at ?? now()) : null,
+                    'admission_fee_waiver_reason' => $waived ? ($validated['admission_fee_waiver_reason'] ?? null) : null,
+                ]);
+            }
 
             // Sync parents
             $syncData = [];

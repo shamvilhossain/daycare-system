@@ -123,6 +123,7 @@ class TherapySessionController extends Controller
             'end_time'           => 'required|date_format:H:i|after:start_time',
             'status'             => 'required|in:scheduled,completed,cancelled,no_show',
             'notes'              => 'nullable|string|max:5000',
+            'child_therapy_package_id' => 'nullable|string|max:20',
         ]);
 
         // Specialization matching
@@ -134,6 +135,10 @@ class TherapySessionController extends Controller
                 " but the selected service \"{$service->name}\" requires " . strtoupper($service->therapy_type) . "."
             );
         }
+
+        // Payment: from a package (specific, or oldest with balance) or pay per session
+        $validated['child_therapy_package_id'] = $this->sessionService
+            ->resolvePackage($validated['child_therapy_package_id'] ?? null, $validated);
 
         // Overlap detection
         if ($this->sessionService->hasOverlap($validated['staff_id'], $validated['session_date'], $validated['start_time'], $validated['end_time'])) {
@@ -156,7 +161,7 @@ class TherapySessionController extends Controller
     {
         $this->authorizeParentAccessToChildRecord($therapySession);
 
-        $therapySession->load(['child', 'therapist', 'service', 'bookedBy']);
+        $therapySession->load(['child', 'therapist', 'service', 'bookedBy', 'childTherapyPackage.package']);
         return view('admin.therapy-sessions.show', compact('therapySession'));
     }
 
@@ -169,7 +174,7 @@ class TherapySessionController extends Controller
             abort(403);
         }
 
-        $therapySession->load(['child', 'therapist', 'service']);
+        $therapySession->load(['child', 'therapist', 'service', 'childTherapyPackage.package', 'invoiceItem']);
         $children = Child::where('is_active', true)->orderBy('first_name')->get();
         $therapists = Staff::where('role', 'therapist')->where('is_active', true)->orderBy('first_name')->get();
         $services = TherapyService::where('is_active', true)->orderBy('name')->get();
@@ -195,6 +200,7 @@ class TherapySessionController extends Controller
             'end_time'           => 'required|date_format:H:i|after:start_time',
             'status'             => 'required|in:scheduled,completed,cancelled,no_show',
             'notes'              => 'nullable|string|max:5000',
+            'child_therapy_package_id' => 'nullable|string|max:20',
         ]);
 
         // Specialization matching
@@ -206,6 +212,10 @@ class TherapySessionController extends Controller
                 " but the selected service \"{$service->name}\" requires " . strtoupper($service->therapy_type) . "."
             );
         }
+
+        // Payment: from a package (specific, or oldest with balance) or pay per session
+        $validated['child_therapy_package_id'] = $this->sessionService
+            ->resolvePackage($validated['child_therapy_package_id'] ?? null, $validated, $therapySession);
 
         // Overlap detection (exclude current session)
         if ($this->sessionService->hasOverlap($validated['staff_id'], $validated['session_date'], $validated['start_time'], $validated['end_time'], $therapySession->id)) {
@@ -237,6 +247,32 @@ class TherapySessionController extends Controller
     }
 
     /**
+     * JSON: packages that can pay for a session (child + therapy + date), oldest first.
+     */
+    public function packageOptions(Request $request)
+    {
+        if ($this->isParent()) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'child_id'           => 'required|integer',
+            'therapy_service_id' => 'required|integer',
+            'session_date'       => 'nullable|date',
+            'exclude'            => 'nullable|integer',
+        ]);
+
+        return response()->json([
+            'packages' => $this->sessionService->packageOptions(
+                (int) $data['child_id'],
+                (int) $data['therapy_service_id'],
+                $data['session_date'] ?? now()->toDateString(),
+                isset($data['exclude']) ? (int) $data['exclude'] : null
+            ),
+        ]);
+    }
+
+    /**
      * Update session status (quick action).
      */
     public function updateStatus(Request $request, TherapySession $therapySession)
@@ -248,6 +284,14 @@ class TherapySessionController extends Controller
         $validated = $request->validate([
             'status' => 'required|in:scheduled,completed,cancelled,no_show',
         ]);
+
+        // Re-activating a cancelled / no-show session paid from a package needs a free slot again
+        $package = $therapySession->childTherapyPackage;
+        if ($package && in_array($validated['status'], ['scheduled', 'completed'])
+            && !in_array($therapySession->status, ['scheduled', 'completed'])
+            && $package->availableFor($therapySession->therapy_service_id, $therapySession->id) < 1) {
+            return back()->with('error', 'The package paying for this session has no sessions left, so it cannot be set back to ' . $validated['status'] . '.');
+        }
 
         $therapySession->update(['status' => $validated['status']]);
 

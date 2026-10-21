@@ -100,6 +100,7 @@
                                                             data-capacity="{{ $program->capacity }}"
                                                             data-active-count="{{ $program->active_count ?? 0 }}"
                                                             data-monthly-fee="{{ $program->monthly_fee }}"
+                                                            data-billing-model="{{ $program->billing_model }}"
                                                             {{ old('program_id', $selectedProgramId) == $program->id ? 'selected' : '' }}>
                                                             {{ $program->name }} ({{ $program->age_range_label }} | Cap: {{ $program->active_count ?? 0 }}/{{ $program->capacity }})
                                                         </option>
@@ -123,7 +124,7 @@
                                             {{-- Initial Status --}}
                                             <div class="col-md-6">
                                                 <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
-                                                <select name="status" class="form-select @error('status') is-invalid @enderror" required>
+                                                <select name="status" id="statusSelect" class="form-select @error('status') is-invalid @enderror" required>
                                                     <option value="active" {{ old('status', 'active') == 'active' ? 'selected' : '' }}>Active (Approved immediately)</option>
                                                     <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>Pending (Requires approval)</option>
                                                     <option value="withdrawn" {{ old('status') == 'withdrawn' ? 'selected' : '' }}>Withdrawn</option>
@@ -151,6 +152,28 @@
                                             <div class="col-12">
                                                 <label class="form-label fw-semibold">Notes / Special Instructions</label>
                                                 <textarea name="notes" class="form-control" rows="3" placeholder="Enter any notes, special requirements, or enrollment comments...">{{ old('notes') }}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Admission fee (one-time, first enrolment only) --}}
+                                <div class="card shadow-sm border-0 mb-3" id="admissionCard" style="display:none;">
+                                    <div class="card-header bg-white">
+                                        <h5 class="mb-0"><i class="bi bi-receipt-cutoff me-2 text-success"></i>Admission Fee</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="admissionText" class="small"></div>
+                                        <div id="admissionWaiver" style="display:none;" class="mt-3">
+                                            <div class="form-check">
+                                                <input type="hidden" name="waive_admission_fee" value="0">
+                                                <input class="form-check-input" type="checkbox" name="waive_admission_fee" value="1" id="waiveCheck" {{ old('waive_admission_fee') ? 'checked' : '' }}>
+                                                <label class="form-check-label fw-semibold" for="waiveCheck">Waive the admission fee for this child</label>
+                                            </div>
+                                            <div id="waiverReasonBox" class="mt-2" style="display:none;">
+                                                <input type="text" name="admission_waiver_reason" maxlength="255" class="form-control @error('admission_waiver_reason') is-invalid @enderror"
+                                                       value="{{ old('admission_waiver_reason') }}" placeholder="Reason, e.g. sibling discount, staff child, scholarship">
+                                                @error('admission_waiver_reason')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                             </div>
                                         </div>
                                     </div>
@@ -209,7 +232,8 @@
                                             <li class="mb-2"><strong>Age Eligibility:</strong> The child's age on the start date is evaluated against program minimum and maximum age limits.</li>
                                             <li class="mb-2"><strong>Capacity:</strong> Active and pending enrollments count towards program capacity.</li>
                                             <li class="mb-2"><strong>Active Status:</strong> Setting status to <em>Active</em> will automatically record you as the approver.</li>
-                                            <li><strong>Duplicates:</strong> Children cannot have multiple concurrent active enrollments in the same program.</li>
+                                            <li class="mb-2"><strong>Duplicates:</strong> Children cannot have multiple concurrent active enrollments in the same program.</li>
+                                            <li><strong>Admission fee:</strong> charged once per child, on the first enrolment — an admission invoice (fee + first month) is created; approve the enrolment once it is paid.</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -309,6 +333,69 @@
                     capFeedbackText.textContent = `Program is full! (${activeCount}/${capacity} capacity reached).`;
                 }
             }
+
+            // ---- Admission fee panel ----
+            const admission = @json($admission);
+            const admissionFee = {{ (float) $admissionFee }};
+            const statusSelect = document.getElementById('statusSelect');
+            const admissionCard = document.getElementById('admissionCard');
+            const admissionText = document.getElementById('admissionText');
+            const admissionWaiver = document.getElementById('admissionWaiver');
+            const waiveCheck = document.getElementById('waiveCheck');
+            const waiverReasonBox = document.getElementById('waiverReasonBox');
+            const statusTouched = {{ old('status') ? 'true' : 'false' }};
+            let userSetStatus = statusTouched;
+            statusSelect.addEventListener('change', () => { userSetStatus = true; });
+            const tk = n => '৳' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+            function updateAdmission() {
+                const info = admission[childSelect.value];
+                if (!info || info.status === 'off') { admissionCard.style.display = 'none'; return; }
+                admissionCard.style.display = 'block';
+                admissionWaiver.style.display = 'none';
+
+                if (info.status !== 'due') {
+                    const what = {
+                        paid: 'already charged and paid on ' + esc(info.invoice),
+                        unpaid: 'already invoiced on ' + esc(info.invoice) + ' (not paid yet)',
+                        waived: 'waived' + (info.reason ? ' — ' + esc(info.reason) : ''),
+                    }[info.status];
+                    admissionText.innerHTML = '<div class="alert alert-secondary mb-0 py-2"><i class="bi bi-check2-circle me-1"></i>Admission fee ' + what
+                        + '. <strong>No admission fee</strong> on this enrolment (it is charged once per child).</div>';
+                    return;
+                }
+
+                const opt = programSelect.options[programSelect.selectedIndex];
+                const monthly = programSelect.value && opt.dataset.billingModel === 'monthly' ? parseFloat(opt.dataset.monthlyFee || 0) : 0;
+                const waived = waiveCheck.checked;
+                const lines = [];
+                if (!waived) lines.push(['Admission fee (one-time)', admissionFee]);
+                if (monthly > 0) lines.push(['First month tuition (' + esc(opt.textContent.split('(')[0].trim()) + ')', monthly]);
+                const total = lines.reduce((s, l) => s + l[1], 0);
+
+                let html = '';
+                if (!info.has_parent) {
+                    html += '<div class="alert alert-danger py-2"><i class="bi bi-person-x me-1"></i>This child has no parent linked — link a parent first (Children → Edit) so the admission invoice can be billed.</div>';
+                }
+                html += '<p class="mb-2"><i class="bi bi-stars text-warning me-1"></i><strong>First enrolment for this child.</strong> An admission invoice will be created for the parent:</p>';
+                html += lines.length
+                    ? '<table class="table table-sm mb-2">' + lines.map(l => '<tr><td>' + l[0] + '</td><td class="text-end">' + tk(l[1]) + '</td></tr>').join('')
+                        + '<tr class="fw-bold"><td>Total</td><td class="text-end">' + tk(total) + '</td></tr></table>'
+                    : '<p class="text-muted mb-2">Nothing to bill (fee waived and the programme has no monthly fee).</p>';
+                html += '<p class="text-muted mb-0">Send the payment link from the invoice, then approve the enrolment once it is paid.</p>';
+                admissionText.innerHTML = html;
+                admissionWaiver.style.display = 'block';
+
+                // Seat is confirmed after payment → start as Pending unless the user picked a status
+                if (!userSetStatus) statusSelect.value = 'pending';
+            }
+
+            waiveCheck.addEventListener('change', () => { waiverReasonBox.style.display = waiveCheck.checked ? 'block' : 'none'; updateAdmission(); });
+            waiverReasonBox.style.display = waiveCheck.checked ? 'block' : 'none';
+            childSelect.addEventListener('change', updateAdmission);
+            programSelect.addEventListener('change', updateAdmission);
+            updateAdmission();
 
             childSelect.addEventListener('change', updatePreview);
             programSelect.addEventListener('change', updatePreview);

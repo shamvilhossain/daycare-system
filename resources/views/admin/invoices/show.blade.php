@@ -227,6 +227,24 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     @endif
+                    @if (session('warning'))
+                        <div class="alert alert-warning alert-dismissible fade show border-0 shadow-sm no-print">
+                            <i class="bi bi-exclamation-circle-fill me-2"></i>{{ session('warning') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+                    @if (!empty($pendingAdmission))
+                        <div class="alert {{ $invoice->status === 'paid' ? 'alert-success' : 'alert-info' }} border-0 shadow-sm no-print d-flex flex-wrap align-items-center justify-content-between gap-2">
+                            <div>
+                                <i class="bi bi-receipt-cutoff me-2"></i><strong>Admission invoice</strong> for {{ $invoice->child->full_name }}'s enrolment in
+                                {{ $pendingAdmission->program->name ?? 'the programme' }} (pending approval).
+                                {{ $invoice->status === 'paid' ? 'It is paid — the enrolment can be approved.' : 'Send the payment link; approve the enrolment once it is paid.' }}
+                            </div>
+                            <a href="{{ route('admin.enrollments.show', $pendingAdmission) }}" class="btn btn-sm {{ $invoice->status === 'paid' ? 'btn-success' : 'btn-outline-primary' }}">
+                                <i class="bi bi-clipboard-check me-1"></i>{{ $invoice->status === 'paid' ? 'Approve enrolment' : 'View enrolment' }}
+                            </a>
+                        </div>
+                    @endif
 
                     {{-- ================= HERO ================= --}}
                     <div class="inv-hero {{ $heroClass }} mb-4">

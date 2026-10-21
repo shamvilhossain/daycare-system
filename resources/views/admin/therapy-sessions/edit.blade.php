@@ -141,7 +141,7 @@
                                             {{-- Session Date --}}
                                             <div class="col-md-4">
                                                 <label class="form-label fw-semibold">Session Date <span class="text-danger">*</span></label>
-                                                <input type="date" name="session_date" class="form-control @error('session_date') is-invalid @enderror" value="{{ old('session_date', $therapySession->session_date) }}" required>
+                                                <input type="date" name="session_date" class="form-control @error('session_date') is-invalid @enderror" value="{{ old('session_date', $therapySession->session_date?->format('Y-m-d')) }}" required>
                                                 @error('session_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                             </div>
 
@@ -158,6 +158,13 @@
                                                 <input type="time" name="end_time" id="endTimeInput" class="form-control @error('end_time') is-invalid @enderror" value="{{ old('end_time', \Carbon\Carbon::parse($therapySession->end_time)->format('H:i')) }}" required>
                                                 @error('end_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                             </div>
+
+                                            @include('admin.therapy-sessions._package-select', [
+                                                'selected' => (string) old('child_therapy_package_id', $therapySession->child_therapy_package_id ?? ''),
+                                                'excludeId' => $therapySession->id,
+                                                'currentPackage' => $therapySession->childTherapyPackage,
+                                                'locked' => $therapySession->invoiceItem !== null && !$therapySession->child_therapy_package_id,
+                                            ])
 
                                             {{-- Notes --}}
                                             <div class="col-12">
@@ -221,6 +228,7 @@
                                             <li class="mb-2"><strong>Specialization:</strong> The therapist's specialization must match the therapy service type.</li>
                                             <li class="mb-2"><strong>Overlap:</strong> A therapist cannot have overlapping sessions on the same date and time.</li>
                                             <li class="mb-2"><strong>Time:</strong> End time must be after start time.</li>
+                                            <li class="mb-2"><strong>Packages:</strong> A session paid from a package uses one of its sessions; cancelled / no-show sessions give it back.</li>
                                             <li><strong>Current session:</strong> The current session is excluded from overlap checks during update.</li>
                                         </ul>
                                     </div>

@@ -125,6 +125,37 @@
                             </div>
                         </div>
 
+                        {{-- Admission fee (one-time, charged on the first enrolment) --}}
+                        @if ($child->is_admitted || config('admission.fee') > 0)
+                        <div class="card shadow-sm border-0 mb-3">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0"><i class="bi bi-receipt-cutoff me-2 text-success"></i>Admission Fee</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-2 small">Status: @include('admin.enrollments._admission-status', ['child' => $child])</div>
+                                <input type="hidden" name="admission_waiver_form" value="1">
+                                <input type="hidden" name="admission_fee_waived" value="0">
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-md-4">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" name="admission_fee_waived" value="1" id="admissionWaived"
+                                                {{ old('admission_fee_waived', $child->admission_fee_waived_at ? 1 : 0) ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="admissionWaived">Admission fee waived</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <input type="text" name="admission_fee_waiver_reason" maxlength="255"
+                                            class="form-control form-control-sm @error('admission_fee_waiver_reason') is-invalid @enderror"
+                                            value="{{ old('admission_fee_waiver_reason', $child->admission_fee_waiver_reason) }}"
+                                            placeholder="Reason (sibling discount, staff child, scholarship…)">
+                                        @error('admission_fee_waiver_reason')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block mt-2">Charged once per child on the first programme enrolment. A waived child is never charged; an existing admission invoice is not changed by this switch.</small>
+                            </div>
+                        </div>
+                        @endif
+
                         {{-- Emergency Contact --}}
                         <div class="card shadow-sm border-0 mb-3">
                             <div class="card-header"><h5 class="mb-0"><i class="bi bi-telephone-fill me-2"></i>Emergency Contact</h5></div>

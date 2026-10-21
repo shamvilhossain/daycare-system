@@ -169,6 +169,8 @@ Route::middleware('auth')->group(function () {
 
     // Therapy Sessions management
     Route::middleware('role_or_permission:admin|therapy-sessions.view-any|therapy-sessions.view')->group(function () {
+        Route::get('/admin/therapy-sessions-package-options', [TherapySessionController::class, 'packageOptions'])
+            ->name('admin.therapy-sessions.package-options');
         Route::resource('/admin/therapy-sessions', TherapySessionController::class, ['as' => 'admin'])
             ->parameters(['therapy-sessions' => 'therapySession']);
         Route::patch('/admin/therapy-sessions/{therapySession}/update-status', [TherapySessionController::class, 'updateStatus'])
@@ -193,6 +195,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/child-therapy-packages', [ChildTherapyPackageController::class, 'index'])->name('admin.child-therapy-packages.index');
         Route::get('/admin/child-therapy-packages/{childTherapyPackage}', [ChildTherapyPackageController::class, 'show'])->name('admin.child-therapy-packages.show');
         Route::get('/admin/child-therapy-packages-create', [ChildTherapyPackageController::class, 'create'])->name('admin.child-therapy-packages.create');
+        Route::get('/admin/child-therapy-packages-balance', [ChildTherapyPackageController::class, 'balance'])->name('admin.child-therapy-packages.balance');
         Route::post('/admin/child-therapy-packages', [ChildTherapyPackageController::class, 'store'])->name('admin.child-therapy-packages.store');
         Route::patch('/admin/child-therapy-packages/{childTherapyPackage}/cancel', [ChildTherapyPackageController::class, 'cancel'])->name('admin.child-therapy-packages.cancel');
     });

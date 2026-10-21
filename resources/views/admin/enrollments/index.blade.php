@@ -100,6 +100,13 @@
                         </div>
                     @endif
 
+                    @if (session('warning'))
+                        <div class="alert alert-warning alert-dismissible fade show">
+                            <i class="bi bi-exclamation-circle-fill me-2"></i>{{ session('warning') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+
                     @if (session('error'))
                         <div class="alert alert-danger alert-dismissible fade show">
                             <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}
@@ -262,6 +269,9 @@
                                                         <small class="text-muted d-block">By {{ $enrollment->approvedBy->name ?? 'Admin' }} on {{ $enrollment->approved_at->format('M d, Y') }}</small>
                                                     @elseif($enrollment->status === 'pending')
                                                         <span class="badge bg-warning-subtle text-warning"><i class="bi bi-clock me-1"></i>Awaiting Decision</span>
+                                                        @if($enrollment->child)
+                                                            <div class="mt-1">@include('admin.enrollments._admission-status', ['child' => $enrollment->child, 'compact' => true])</div>
+                                                        @endif
                                                     @elseif($enrollment->status === 'graduated')
                                                         <span class="small text-info"><i class="bi bi-mortarboard me-1"></i>Completed</span>
                                                     @elseif($enrollment->status === 'withdrawn')
@@ -277,7 +287,12 @@
                                                         @unless(auth()->user()->hasRole('parent'))
                                                         {{-- Quick Approve / Reject for Pending --}}
                                                         @if($enrollment->status === 'pending')
-                                                            <form action="{{ route('admin.enrollments.approve', $enrollment) }}" method="POST" class="d-inline">
+                                                            @php
+                                                                $admissionOpen = $enrollment->child && ($enrollment->child->admission_status === 'unpaid'
+                                                                    || ($enrollment->child->admission_status === 'due' && config('admission.fee') > 0));
+                                                            @endphp
+                                                            <form action="{{ route('admin.enrollments.approve', $enrollment) }}" method="POST" class="d-inline"
+                                                                  @if($admissionOpen) onsubmit="return confirm('The admission fee for {{ addslashes($enrollment->child->full_name) }} is not paid yet. Approve the enrolment anyway?');" @endif>
                                                                 @csrf @method('PATCH')
                                                                 <button type="submit" class="btn btn-sm btn-outline-success" title="Approve Enrollment">
                                                                     <i class="bi bi-check-lg"></i>

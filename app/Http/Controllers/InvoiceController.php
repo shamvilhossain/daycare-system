@@ -181,7 +181,13 @@ class InvoiceController extends Controller
         }
 
         $invoice->load(['parent', 'child', 'items', 'payments.receivedBy', 'onlineTransactions']);
-        return view('admin.invoices.show', compact('invoice'));
+
+        // Admission invoice → its child's enrolment waiting for approval (admin shortcut)
+        $pendingAdmission = $parentProfileId === null && $invoice->child?->admission_invoice_id === $invoice->id
+            ? $invoice->child->enrollments()->with('program')->where('status', 'pending')->latest('id')->first()
+            : null;
+
+        return view('admin.invoices.show', compact('invoice', 'pendingAdmission'));
     }
 
     /**
@@ -256,6 +262,7 @@ class InvoiceController extends Controller
         DB::transaction(function () use ($invoice) {
             // Packages bought on this invoice would otherwise stay active but unbilled
             $this->invoiceService->cancelPackagesBilledOn($invoice);
+            $this->invoiceService->releaseAdmissionBilledOn($invoice);
             $invoice->delete();
         });
 

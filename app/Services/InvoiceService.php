@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Child;
 use App\Models\ChildTherapyPackage;
 use App\Models\Invoice;
 use App\Models\InvoiceItemPreset;
@@ -79,11 +80,13 @@ class InvoiceService
             }
 
             // Remember free-text item names for the Description dropdown next time
-            // (therapy packages / sessions come from their own catalogs)
-            $this->rememberItemPresets(array_filter(
-                $data['items'] ?? [],
-                fn ($item) => empty($item['therapy_package_id']) && empty($item['therapy_service_id'])
-            ));
+            // (therapy packages / sessions come from their own catalogs; system-built invoices opt out)
+            if ($data['remember_presets'] ?? true) {
+                $this->rememberItemPresets(array_filter(
+                    $data['items'] ?? [],
+                    fn ($item) => empty($item['therapy_package_id']) && empty($item['therapy_service_id'])
+                ));
+            }
 
             // Optionally attach completed therapy sessions
             if (!empty($data['therapy_session_ids'])) {
@@ -283,7 +286,17 @@ class InvoiceService
         DB::transaction(function () use ($invoice) {
             $invoice->update(['status' => 'cancelled']);
             $this->cancelPackagesBilledOn($invoice);
+            $this->releaseAdmissionBilledOn($invoice);
         });
+    }
+
+    /**
+     * A cancelled / deleted admission invoice no longer counts as the child's admission,
+     * so the admission fee is charged again on the next enrolment (a waiver stays).
+     */
+    public function releaseAdmissionBilledOn(Invoice $invoice): void
+    {
+        Child::where('admission_invoice_id', $invoice->id)->update(['admission_invoice_id' => null]);
     }
 
     /**

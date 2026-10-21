@@ -6,6 +6,7 @@ use App\Http\Controllers\Traits\ScopesForParent;
 use App\Models\Child;
 use App\Models\Enrollment;
 use App\Models\Program;
+use App\Services\AdmissionFeeService;
 use App\Services\EnrollmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,7 +28,7 @@ class EnrollmentController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Enrollment::with(['child', 'program', 'createdBy', 'approvedBy']);
+        $query = Enrollment::with(['child.admissionInvoice', 'program', 'createdBy', 'approvedBy']);
 
         // Scope to parent's own children
         $parentChildIds = $this->getParentChildIds();
@@ -90,7 +91,7 @@ class EnrollmentController extends Controller
             abort(403);
         }
 
-        $children = Child::where('is_active', true)->orderBy('first_name')->get();
+        $children = Child::where('is_active', true)->with(['parents', 'admissionInvoice'])->orderBy('first_name')->get();
         $programs = Program::where('is_active', true)->withCount(['enrollments as active_count' => function ($q) {
             $q->whereIn('status', ['active', 'pending']);
         }])->orderBy('name')->get();
@@ -98,7 +99,16 @@ class EnrollmentController extends Controller
         $selectedChildId = $request->query('child_id');
         $selectedProgramId = $request->query('program_id');
 
-        return view('admin.enrollments.create', compact('children', 'programs', 'selectedChildId', 'selectedProgramId'));
+        // Admission fee panel: what each child would be charged on this enrolment
+        $admissionFee = app(AdmissionFeeService::class)->fee();
+        $admission = $children->mapWithKeys(fn (Child $c) => [$c->id => [
+            'status'     => $admissionFee > 0 || $c->is_admitted ? $c->admission_status : 'off',
+            'invoice'    => $c->admissionInvoice?->invoice_number,
+            'has_parent' => $c->parents->isNotEmpty(),
+            'reason'     => $c->admission_fee_waiver_reason,
+        ]]);
+
+        return view('admin.enrollments.create', compact('children', 'programs', 'selectedChildId', 'selectedProgramId', 'admissionFee', 'admission'));
     }
 
     /**
@@ -118,12 +128,23 @@ class EnrollmentController extends Controller
             'start_date'   => 'required|date',
             'end_date'     => 'nullable|date|after_or_equal:start_date',
             'notes'        => 'nullable|string|max:2000',
+            'waive_admission_fee'     => 'nullable|boolean',
+            'admission_waiver_reason' => 'nullable|required_if:waive_admission_fee,1|string|max:255',
         ]);
 
         $enrollment = $this->enrollmentService->createEnrollment($validated, $request->user());
+        $invoice = $enrollment->admissionInvoice;
+        $message = "Child successfully enrolled into {$enrollment->program->name}.";
 
-        return redirect()->route('admin.enrollments.index')
-            ->with('success', "Child successfully enrolled into {$enrollment->program->name}.");
+        if ($invoice) {
+            // Straight to the admission invoice so the payment link can be sent
+            return redirect()->route('admin.invoices.show', $invoice)
+                ->with('success', "{$message} Admission invoice {$invoice->invoice_number} created for ৳" . number_format((float) $invoice->total_amount, 2)
+                    . ' — send the payment link to the parent, then approve the enrolment once it is paid.')
+                ->with('warning', $enrollment->status === 'active' ? 'The enrolment was set Active before the admission invoice was paid.' : null);
+        }
+
+        return redirect()->route('admin.enrollments.index')->with('success', $message);
     }
 
     /**
@@ -133,8 +154,11 @@ class EnrollmentController extends Controller
     {
         $this->authorizeParentAccessToChildRecord($enrollment);
 
-        $enrollment->load(['child.parents', 'program', 'createdBy', 'approvedBy']);
-        return view('admin.enrollments.show', compact('enrollment'));
+        $enrollment->load(['child.parents', 'child.admissionInvoice', 'program', 'createdBy', 'approvedBy']);
+        $admissionWarning = $enrollment->status === 'pending' && $enrollment->child
+            ? app(AdmissionFeeService::class)->approvalWarning($enrollment->child) : null;
+
+        return view('admin.enrollments.show', compact('enrollment', 'admissionWarning'));
     }
 
     /**
@@ -174,10 +198,16 @@ class EnrollmentController extends Controller
             'notes'        => 'nullable|string|max:2000',
         ]);
 
+        $wasActive = $enrollment->status === 'active';
         $this->enrollmentService->updateEnrollment($enrollment, $validated, $request->user());
+        $invoice = $enrollment->relationLoaded('admissionInvoice') ? $enrollment->admissionInvoice : null;
+        $warning = !$wasActive && $enrollment->status === 'active'
+            ? app(AdmissionFeeService::class)->approvalWarning($enrollment->child()->first()) : null;
 
         return redirect()->route('admin.enrollments.index')
-            ->with('success', 'Enrollment record updated successfully.');
+            ->with('success', 'Enrollment record updated successfully.'
+                . ($invoice ? " Admission invoice {$invoice->invoice_number} created." : ''))
+            ->with('warning', $warning ? "Set Active without the admission fee: {$warning}" : null);
     }
 
     /**
@@ -189,10 +219,11 @@ class EnrollmentController extends Controller
             abort(403);
         }
 
-        $enrollment->delete();
+        $cancelled = $this->enrollmentService->delete($enrollment);
 
         return redirect()->route('admin.enrollments.index')
-            ->with('success', 'Enrollment record deleted successfully.');
+            ->with('success', 'Enrollment record deleted successfully.'
+                . ($cancelled ? " Unpaid admission invoice {$cancelled->invoice_number} was cancelled." : ''));
     }
 
     /**
@@ -205,8 +236,10 @@ class EnrollmentController extends Controller
         }
 
         $this->enrollmentService->approve($enrollment, auth()->user());
+        $warning = app(AdmissionFeeService::class)->approvalWarning($enrollment->child()->first());
 
-        return back()->with('success', "Enrollment for {$enrollment->child->full_name} has been approved.");
+        return back()->with('success', "Enrollment for {$enrollment->child->full_name} has been approved.")
+            ->with('warning', $warning ? "Approved without the admission fee: {$warning}" : null);
     }
 
     /**
@@ -220,8 +253,10 @@ class EnrollmentController extends Controller
 
         $reason = $request->input('reason');
         $this->enrollmentService->reject($enrollment, auth()->user(), $reason);
+        $cancelled = $enrollment->admissionInvoice;
 
-        return back()->with('success', "Enrollment for {$enrollment->child->full_name} has been rejected.");
+        return back()->with('success', "Enrollment for {$enrollment->child->full_name} has been rejected."
+            . ($cancelled ? " Unpaid admission invoice {$cancelled->invoice_number} was cancelled." : ''));
     }
 
     /**

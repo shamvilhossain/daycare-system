@@ -190,6 +190,16 @@
 
                                     <hr class="my-2 text-muted opacity-25">
 
+                                    {{-- Admission fee (one-time) --}}
+                                    @if ($child->is_admitted || config('admission.fee') > 0)
+                                        <div class="mb-3">
+                                            <div class="fw-semibold small text-secondary mb-1"><i class="bi bi-receipt-cutoff text-success me-1"></i> Admission Fee</div>
+                                            <div class="small">@include('admin.enrollments._admission-status', ['child' => $child])</div>
+                                        </div>
+
+                                        <hr class="my-2 text-muted opacity-25">
+                                    @endif
+
                                     {{-- Parents --}}
                                     <div>
                                         <div class="fw-semibold small text-secondary mb-2"><i class="bi bi-people text-primary me-1"></i> Guardians / Parents</div>

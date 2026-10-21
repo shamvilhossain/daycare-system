@@ -12,6 +12,10 @@ use Illuminate\Validation\ValidationException;
 
 class EnrollmentService
 {
+    public function __construct(protected AdmissionFeeService $admissionFees)
+    {
+    }
+
     /**
      * Validate all business rules for an enrollment.
      *
@@ -104,7 +108,7 @@ class EnrollmentService
      */
     public function createEnrollment(array $data, User $creator): Enrollment
     {
-        $child = Child::findOrFail($data['child_id']);
+        $child = Child::with('parents')->findOrFail($data['child_id']);
         $program = Program::findOrFail($data['program_id']);
         $status = $data['status'] ?? 'pending';
 
@@ -114,29 +118,43 @@ class EnrollmentService
             $data['start_date'],
             $status
         );
+        $this->admissionFees->assertBillable($child, $status);
 
         return DB::transaction(function () use ($data, $creator, $status) {
-            $approvedAt = null;
-            $approvedBy = null;
+            $enrollment = $this->insertEnrollment($data, $creator, $status);
 
-            if ($status === 'active') {
-                $approvedAt = now();
-                $approvedBy = $creator->id;
-            }
+            // First enrolment ever → admission invoice (admission fee + first month); available as $enrollment->admissionInvoice
+            $invoice = $this->admissionFees->invoiceForEnrollment(
+                $enrollment, $creator, (bool) ($data['waive_admission_fee'] ?? false), $data['admission_waiver_reason'] ?? null
+            );
+            $enrollment->setRelation('admissionInvoice', $invoice);
 
-            return Enrollment::create([
-                'child_id'     => $data['child_id'],
-                'program_id'   => $data['program_id'],
-                'service_type' => $data['service_type'],
-                'status'       => $status,
-                'start_date'   => $data['start_date'],
-                'end_date'     => $data['end_date'] ?? null,
-                'notes'        => $data['notes'] ?? null,
-                'created_by'   => $creator->id,
-                'approved_at'  => $approvedAt,
-                'approved_by'  => $approvedBy,
-            ]);
+            return $enrollment;
         });
+    }
+
+    protected function insertEnrollment(array $data, User $creator, string $status): Enrollment
+    {
+        $approvedAt = null;
+        $approvedBy = null;
+
+        if ($status === 'active') {
+            $approvedAt = now();
+            $approvedBy = $creator->id;
+        }
+
+        return Enrollment::create([
+            'child_id'     => $data['child_id'],
+            'program_id'   => $data['program_id'],
+            'service_type' => $data['service_type'],
+            'status'       => $status,
+            'start_date'   => $data['start_date'],
+            'end_date'     => $data['end_date'] ?? null,
+            'notes'        => $data['notes'] ?? null,
+            'created_by'   => $creator->id,
+            'approved_at'  => $approvedAt,
+            'approved_by'  => $approvedBy,
+        ]);
     }
 
     /**
@@ -156,7 +174,13 @@ class EnrollmentService
             $enrollment->id
         );
 
-        return DB::transaction(function () use ($enrollment, $data, $user, $newStatus) {
+        $wasLive = in_array($enrollment->status, ['pending', 'active'], true);
+        $isLive = in_array($newStatus, ['pending', 'active'], true);
+        if (!$wasLive && $isLive) {
+            $this->admissionFees->assertBillable($child->load('parents'), $newStatus);
+        }
+
+        return DB::transaction(function () use ($enrollment, $data, $user, $newStatus, $wasLive, $isLive) {
             $approvedAt = $enrollment->approved_at;
             $approvedBy = $enrollment->approved_by;
 
@@ -180,6 +204,13 @@ class EnrollmentService
                 'approved_at'  => $approvedAt,
                 'approved_by'  => $approvedBy,
             ]);
+
+            // Admission invoice follows the enrolment: raised when it (re)becomes live, released if rejected unpaid
+            if ($newStatus === 'rejected' && $wasLive) {
+                $this->admissionFees->releaseForEnrollment($enrollment);
+            } elseif (!$wasLive && $isLive && $user) {
+                $enrollment->setRelation('admissionInvoice', $this->admissionFees->invoiceForEnrollment($enrollment->fresh(), $user));
+            }
 
             return $enrollment;
         });
@@ -216,14 +247,32 @@ class EnrollmentService
             $notes = ($notes ? $notes . "\n" : '') . "[Rejected by {$rejector->name} on " . now()->format('Y-m-d H:i') . "]: {$reason}";
         }
 
-        $enrollment->update([
-            'status'      => 'rejected',
-            'notes'       => $notes,
-            'approved_at' => null,
-            'approved_by' => null,
-        ]);
+        DB::transaction(function () use ($enrollment, $notes) {
+            $enrollment->update([
+                'status'      => 'rejected',
+                'notes'       => $notes,
+                'approved_at' => null,
+                'approved_by' => null,
+            ]);
+
+            // Unpaid admission invoice is cancelled so the fee is charged on a future enrolment
+            $enrollment->setRelation('admissionInvoice', $this->admissionFees->releaseForEnrollment($enrollment));
+        });
 
         return $enrollment;
+    }
+
+    /**
+     * Delete an enrollment; an unpaid admission invoice raised for it is cancelled.
+     */
+    public function delete(Enrollment $enrollment): ?\App\Models\Invoice
+    {
+        return DB::transaction(function () use ($enrollment) {
+            $released = $this->admissionFees->releaseForEnrollment($enrollment);
+            $enrollment->delete();
+
+            return $released;
+        });
     }
 
     /**

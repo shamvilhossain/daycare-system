@@ -108,6 +108,16 @@
                                 </div>
                             </div>
                             <div class="col-lg-4">
+                                {{-- Existing balance: the child's active packages, checked before buying another --}}
+                                <div class="card shadow-sm border-0 mb-3" id="balanceCard" data-url="{{ route('admin.child-therapy-packages.balance') }}">
+                                    <div class="card-header bg-white"><h6 class="mb-0 fw-bold"><i class="bi bi-wallet2 text-success me-2"></i>Existing Balance</h6></div>
+                                    <div class="card-body small" id="balanceBody">
+                                        <div class="text-muted text-center py-3">
+                                            <i class="bi bi-person-check fs-3 d-block mb-1 text-secondary"></i>
+                                            Select a child to see the packages and sessions they already have.
+                                        </div>
+                                    </div>
+                                </div>
                                 {{-- Package Preview --}}
                                 <div class="card shadow-sm border-0 mb-3">
                                     <div class="card-header bg-white"><h6 class="mb-0 fw-bold"><i class="bi bi-eye text-info me-2"></i>Package Preview</h6></div>
@@ -128,7 +138,8 @@
                                         <ul class="ps-3 mb-0">
                                             <li class="mb-2"><strong>Purchase price</strong> is editable — use for discounts or negotiated rates.</li>
                                             <li class="mb-2">Package composition is <strong>snapshotted</strong> at purchase time — later catalog changes won't affect this purchase.</li>
-                                            <li>Session balance is computed live from completed sessions.</li>
+                                            <li class="mb-2">Session balance is computed live from completed sessions.</li>
+                                            <li><strong>Invoice:</strong> a draft invoice for the purchase price is created for the child's primary parent (no invoice for a ৳0 package).</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -147,6 +158,41 @@
             const previewPrompt = document.getElementById('previewPrompt');
             const previewContent = document.getElementById('previewContent');
             const previewItems = document.getElementById('previewItems');
+            const childSelect = document.querySelector('select[name="child_id"]');
+            const balanceCard = document.getElementById('balanceCard');
+            const balanceBody = document.getElementById('balanceBody');
+
+            const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+            function loadBalance() {
+                if (!childSelect.value) {
+                    balanceBody.innerHTML = '<div class="text-muted text-center py-3"><i class="bi bi-person-check fs-3 d-block mb-1 text-secondary"></i>Select a child to see the packages and sessions they already have.</div>';
+                    return;
+                }
+                balanceBody.innerHTML = '<div class="text-muted text-center py-3">Loading…</div>';
+                fetch(balanceCard.dataset.url + '?child_id=' + encodeURIComponent(childSelect.value), { headers: { 'Accept': 'application/json' } })
+                    .then(r => r.ok ? r.json() : Promise.reject())
+                    .then(({ packages }) => {
+                        if (!packages.length) {
+                            balanceBody.innerHTML = '<div class="text-success text-center py-2"><i class="bi bi-check-circle me-1"></i>No active package with sessions left — OK to buy a new one.</div>';
+                            return;
+                        }
+                        balanceBody.innerHTML = '<div class="alert alert-warning py-2 px-2 mb-2"><i class="bi bi-exclamation-triangle me-1"></i>This child already has '
+                            + packages.length + ' active package(s) with sessions left. New sessions use the oldest package first.</div>'
+                            + packages.map(p => '<div class="border rounded p-2 mb-2">'
+                                + '<div class="d-flex justify-content-between"><a class="fw-semibold" href="' + esc(p.url) + '" target="_blank">' + esc(p.name) + '</a>'
+                                + '<span class="badge bg-success-subtle text-success border">' + p.available + ' free</span></div>'
+                                + '<div class="text-muted">Bought ' + esc(p.purchased_at) + (p.expires_at ? ' · expires ' + esc(p.expires_at) : ' · no expiry')
+                                + (p.invoice ? ' · ' + esc(p.invoice.number) + ' (' + esc(p.invoice.status.replace('_', ' ')) + ')' : '') + '</div>'
+                                + p.services.map(s => '<div class="d-flex justify-content-between"><span>' + esc(s.type) + ' — ' + esc(s.name) + '</span><span>'
+                                    + s.remaining + ' of ' + s.included + ' left' + (s.remaining > s.available ? ' (' + (s.remaining - s.available) + ' booked)' : '') + '</span></div>').join('')
+                                + '</div>').join('');
+                    })
+                    .catch(() => { balanceBody.innerHTML = '<div class="text-danger">Could not load the balance.</div>'; });
+            }
+
+            childSelect.addEventListener('change', loadBalance);
+            loadBalance();
 
             packageSelect.addEventListener('change', function() {
                 const option = this.options[this.selectedIndex];

@@ -194,6 +194,13 @@
                                                         <div class="progress" style="height: 8px;">
                                                             <div class="progress-bar {{ $remaining === 0 ? 'bg-danger' : 'bg-success' }}" style="width: {{ $pct }}%"></div>
                                                         </div>
+                                                        @php
+                                                            $available = $childTherapyPackage->availableFor($item->therapy_service_id);
+                                                            $booked = $remaining - $available;
+                                                        @endphp
+                                                        @if ($booked > 0)
+                                                            <div class="small text-muted mt-1"><i class="bi bi-calendar-check me-1"></i>{{ $booked }} booked (scheduled) · {{ $available }} free to book</div>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>

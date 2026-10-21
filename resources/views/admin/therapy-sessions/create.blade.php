@@ -158,6 +158,11 @@
                                                 @error('end_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                             </div>
 
+                                            @include('admin.therapy-sessions._package-select', [
+                                                'selected' => old('child_therapy_package_id'),
+                                                'excludeId' => null,
+                                            ])
+
                                             {{-- Notes --}}
                                             <div class="col-12">
                                                 <label class="form-label fw-semibold">Session Notes</label>
@@ -220,6 +225,7 @@
                                             <li class="mb-2"><strong>Specialization:</strong> The therapist's specialization must match the therapy service type (SLT/ABA/OT).</li>
                                             <li class="mb-2"><strong>Overlap:</strong> A therapist cannot have overlapping sessions on the same date and time.</li>
                                             <li class="mb-2"><strong>Time:</strong> End time must be after start time.</li>
+                                            <li class="mb-2"><strong>Packages:</strong> If the child has an active package for this therapy, the session is taken from the oldest one first. Package sessions are not billed again on invoices.</li>
                                             <li><strong>Auto-fill:</strong> Selecting a service auto-calculates the end time based on its duration.</li>
                                         </ul>
                                     </div>

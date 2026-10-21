@@ -14,7 +14,34 @@ class Child extends Model
         'is_active' => 'boolean',
         'ec_authorized_pickup' => 'boolean',
         'additional_contacts' => 'array',
+        'admission_fee_waived_at' => 'datetime',
     ];
+
+    /** Invoice raised on the child's first enrolment (admission fee + first month). */
+    public function admissionInvoice()
+    {
+        return $this->belongsTo(Invoice::class, 'admission_invoice_id');
+    }
+
+    /** Admission fee already charged or waived — never charge it again. */
+    public function getIsAdmittedAttribute(): bool
+    {
+        return $this->admission_invoice_id !== null || $this->admission_fee_waived_at !== null;
+    }
+
+    /**
+     * Admission fee status: 'due' (not charged yet), 'waived', 'paid' or 'unpaid' (invoiced, not fully paid).
+     */
+    public function getAdmissionStatusAttribute(): string
+    {
+        if ($this->admission_fee_waived_at) {
+            return 'waived';
+        }
+        if (!$this->admission_invoice_id) {
+            return 'due';
+        }
+        return $this->admissionInvoice?->status === 'paid' ? 'paid' : 'unpaid';
+    }
 
     public function parents()
     {

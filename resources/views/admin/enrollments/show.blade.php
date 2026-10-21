@@ -74,20 +74,30 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     @endif
+                    @if (session('warning'))
+                        <div class="alert alert-warning alert-dismissible fade show">
+                            <i class="bi bi-exclamation-circle-fill me-2"></i>{{ session('warning') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
 
                     <div class="card shadow-sm border-0 mb-4">
                         <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
-                            <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center gap-3 flex-wrap">
                                 <span class="fs-5 fw-bold text-muted">Status:</span>
                                 <span class="badge fs-6 px-3 py-2 {{ $enrollment->status_badge_class }}">
                                     {{ $enrollment->status_label }}
                                 </span>
+                                @if($enrollment->child)
+                                    <span class="d-inline-flex align-items-center">@include('admin.enrollments._admission-status', ['child' => $enrollment->child])</span>
+                                @endif
                             </div>
 
                             {{-- Actions --}}
                             <div class="d-flex gap-2">
                                 @if($enrollment->status === 'pending')
-                                    <form action="{{ route('admin.enrollments.approve', $enrollment) }}" method="POST">
+                                    <form action="{{ route('admin.enrollments.approve', $enrollment) }}" method="POST"
+                                          @if($admissionWarning) onsubmit="return confirm(@js($admissionWarning . ' Approve the enrolment anyway?'));" @endif>
                                         @csrf @method('PATCH')
                                         <button type="submit" class="btn btn-success"><i class="bi bi-check-lg me-1"></i>Approve Application</button>
                                     </form>

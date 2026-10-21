@@ -262,6 +262,18 @@
                                         <div class="detail-value">{{ $therapySession->bookedBy->name ?? 'Unknown' }}</div>
                                     </div>
                                     <div class="mb-2">
+                                        <div class="detail-label">Payment</div>
+                                        <div class="detail-value">
+                                            @if ($therapySession->childTherapyPackage)
+                                                <a href="{{ route('admin.child-therapy-packages.show', $therapySession->childTherapyPackage) }}">
+                                                    <i class="bi bi-box-seam me-1"></i>{{ $therapySession->childTherapyPackage->package->name ?? 'Package' }}
+                                                </a>
+                                            @else
+                                                Pay per session
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
                                         <div class="detail-label">Created</div>
                                         <div class="detail-value small">{{ $therapySession->created_at->format('M d, Y h:i A') }}</div>
                                     </div>
